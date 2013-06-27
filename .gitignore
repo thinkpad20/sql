@@ -1,0 +1,4 @@
+bin/*
+src/*.c
+src/*.h
+src/auxfiles/*

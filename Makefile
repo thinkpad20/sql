@@ -1,19 +1,23 @@
 all: lex yacc compile
 
-lex: sql.l
-	lex -i sql.l
+lex: src/lexyacc/sql.l
+	$(LEX) -i src/lexyacc/sql.l
+	mv lex.yy.c src
 
-yacc: sql.y
-	yacc -d -v sql.y
+yacc: src/lexyacc/sql.y
+	$(YACC) -d -v src/lexyacc/sql.y
+	mv y.tab.c src
+	mv y.tab.h src
+	mv y.output src/auxfiles
 
-compile: y.tab.c lex.yy.c
-	$(CC) -o sql_parser y.tab.c lex.yy.c -ly -ll
+compile: src/y.tab.c src/lex.yy.c
+	$(CC) -o bin/sql_parser src/y.tab.c src/lex.yy.c -ly -ll
 
 test: all
-	@./parsesql.sh selecttest.sql
-	@./parsesql.sh insertintotest.sql
-	@./parsesql.sh deletefromtest.sql
-	@./parsesql.sh createtest.sql
+	@./parsesql.sh tests/selecttest.sql
+	@./parsesql.sh tests/insertintotest.sql
+	@./parsesql.sh tests/deletefromtest.sql
+	@./parsesql.sh tests/createtest.sql
 
 cleanup:
 	-rm test.tab.cacc
