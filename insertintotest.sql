@@ -1,0 +1,1 @@
+INSERT INTO blub VALUES (5,6);
