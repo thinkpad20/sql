@@ -1,17 +1,19 @@
 all: lex yacc compile
+	@echo "Finished! Run ./parsesql.sh <filename> to run the parser."
 
 lex: src/lexyacc/sql.l
-	$(LEX) -i src/lexyacc/sql.l
-	mv lex.yy.c src
+	@$(LEX) -i src/lexyacc/sql.l
+	@mv lex.yy.c src
 
 yacc: src/lexyacc/sql.y
-	$(YACC) -d -v src/lexyacc/sql.y
-	mv y.tab.c src
-	mv y.tab.h src
-	mv y.output src/auxfiles
+	@$(YACC) -d -v src/lexyacc/sql.y
+	@mv y.tab.c src
+	@mv y.tab.h src
+	@mkdir -p src/auxfiles
+	@mv y.output src/auxfiles
 
 compile: src/y.tab.c src/lex.yy.c
-	$(CC) -o bin/sql_parser src/y.tab.c src/lex.yy.c -ly -ll
+	@$(CC) -o bin/sql_parser src/y.tab.c src/lex.yy.c -ly -ll
 
 test: all
 	@./parsesql.sh tests/selecttest.sql
