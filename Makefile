@@ -13,6 +13,7 @@ yacc: src/yacc/sql.y
 	@mv y.output src/auxfiles
 
 compile: src/y.tab.c src/lex.yy.c
+	mkdir -p bin
 	@$(CC) -o bin/sql_parser src/y.tab.c src/lex.yy.c -ly -ll
 
 test: all
