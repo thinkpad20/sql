@@ -1,0 +1,85 @@
+/* planning to put the relational algebra representation types here */
+
+/*
+SRA - sugared relational algebra
+
+Project(expression list, table)
+Select(condition list, table)
+Rename(old name, new name, table)
+Join(type, table, table)
+
+
+*/
+
+/*
+RA - relational algebra
+
+Haskell:
+data RA = Table String
+        | Select Expression RA
+        | Project [String] RA
+        | Union RA RA
+        | Difference RA RA
+        | Cross RA RA
+        | Rename String [String] RA
+
+data Expression = Eq String String
+                | Lt String String
+                | Gt String String
+                | And Expression Expression
+                | Or Expression Expression
+                | Not Expression
+
+C:
+typedef struct RATable {
+   const char *name;
+} RATable;
+
+typedef struct RASelect {
+   RAExpression *expr;
+   RA *ra;
+} RASelect;
+
+typedef struct RAProject {
+   unsigned num_cols;
+   const char **cols;
+   RA *ra;
+} RAProject;
+
+typedef struct RAUnion {
+   RA *ra1, *ra2;
+} RAUnion;
+
+typedef struct RADifference {
+   RA *ra1, *ra2;
+} RADifference;
+
+typedef struct RACross {
+   RA *ra1, *ra2;
+} RACross;
+
+typedef struct RARename {
+   const char *table_name;
+   unsigned num_col_names;
+   const char **col_names;
+   RA *ra;
+} RARename;
+
+enum RAType {
+   RA_TABLE, 
+   RA_SELECT, 
+   RA_PROJECT, 
+   RA_UNION, 
+   RA_DIFFERENCE, 
+   RA_CROSS, 
+   RA_RENAME
+};
+
+typedef struct RA {
+   enum RAType t;
+   union {
+      
+   }
+} RA;
+
+*/

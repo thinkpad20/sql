@@ -26,9 +26,9 @@ void puts_mod(const char *line) {
 %token PRIMARY FOREIGN KEY DEFAULT CHECK NOT TOKEN_NULL
 %token AND OR NEQ GEQ LEQ REFERENCES ORDER BY DELETE
 %token AS INT DOUBLE CHAR VARCHAR TEXT USING
-%token JOIN INNER OUTER LEFT RIGHT NATURAL UNION
+%token JOIN INNER OUTER LEFT RIGHT NATURAL CROSS UNION
 %token VALUES AUTO INCREMENT ASC DESC UNIQUE IN ON
-%token COUNT SUM AVG MIN MAX
+%token COUNT SUM AVG MIN MAX INTERSECT EXCEPT DISTINCT
 %token <strval> IDENTIFIER
 %token <strval> STRING_LITERAL
 %token <dval> DOUBLE_LITERAL
@@ -48,30 +48,30 @@ sql_query
 	;
 
 sql_line
-	: create_table { puts_mod ("you created a table."); }
-	| select 		{ puts_mod ("you selected something."); }
-	| insert_into 	{ puts_mod ("you inserted a row."); }
-	| delete_from 	{ puts_mod ("you deleted a row."); }
+	: create_table 
+	| select 		
+	| insert_into 	
+	| delete_from 	
 	| /* empty */
 	;
 
 create_table
-	: CREATE TABLE table_name '(' column_dec_list ')' { puts_mod ("you created a table."); }
+	: CREATE TABLE table_name '(' column_dec_list ')' 
 	;
 
 column_dec_list
-	: column_dec { puts_mod ("you entered a column dec list"); }
+	: column_dec 
 	| column_dec ',' column_dec_list
 	;
 
 column_dec
-	: column_name column_type opt_constraints { puts_mod ("you entered a column dec"); }
+	: column_name column_type opt_constraints 
 	| key_dec
 	;
 
 column_type
-	: type { puts_mod ("you entered a column type."); }
-	| type '(' INT_LITERAL ')' { puts_mod ("you entered a column type with a size."); }
+	: type 
+	| type '(' INT_LITERAL ')' 
 	;
 
 type
@@ -126,12 +126,21 @@ default_stmt
 
 select
 	: select_statement
-	| select UNION select_statement
+	| select select_combo select_statement
+	;
+
+select_combo
+	: UNION | INTERSECT | EXCEPT
 	;
 
 select_statement
-	: SELECT expression_list FROM table opt_select_constraints
+	: SELECT opt_distinct expression_list FROM table opt_select_constraints
 	| '(' select_statement ')'
+	;
+
+opt_distinct
+	: DISTINCT
+	| /* empty */
 	;
 
 opt_select_constraints
@@ -151,7 +160,7 @@ select_constraint
 	;
 
 where_condition
-	: WHERE bool_expression { puts_mod("parsed a where clause"); }
+	: WHERE bool_expression 
 	;
 
 orderby
@@ -186,28 +195,39 @@ expression_list
 	;
 
 expression
-	: expression '+' mulexp { puts_mod ("you entered exp + mulexp"); }
-	| expression '-' mulexp { puts_mod ("you entered exp - mulexp"); }
-	| mulexp { puts_mod ("you entered mulexp"); }
+	: expression '+' mulexp 
+	| expression '-' mulexp 
+	| mulexp 
 	;
 
 mulexp
-	: mulexp '*' primary { puts_mod ("you entered mulexp * primary"); }
-	| mulexp '/' primary { puts_mod ("you entered mulexp / primary"); }
-	| primary { puts_mod ("you entered primary"); }
+	: mulexp '*' primary 
+	| mulexp '/' primary 
+	| primary 
 	;
 
 primary
-	: '(' expression ')' { puts_mod ("you entered (expression)"); }
-	| '-' primary { puts_mod ("you entered -primary"); }
-	| term { puts_mod ("you entered a primary term"); }
+	: '(' expression ')' 
+	| '-' primary 
+	| term 
 	;
 
 term
 	: literal_value
-	| column_name_or_star 
-	| table_name '.' column_name_or_star { puts_mod ("you entered a table name and column."); }
-	| function_name '(' expression ')' { puts_mod ("you entered a function."); }
+	| TOKEN_NULL
+	| opt_table_qualifier column_name_or_star opt_alias
+	| function_name '(' expression ')' 
+	;
+
+opt_table_qualifier
+	: table_name '.'
+	| /* empty */
+	;
+
+opt_alias
+	: AS IDENTIFIER
+	| IDENTIFIER
+	| /* empty */
 	;
 
 function_name
@@ -215,22 +235,22 @@ function_name
 	;
 
 column_name_or_star
-	: '*' { puts_mod("you entered *\n"); }
-	| column_name { puts_mod ("you entered a column."); }
+	: '*' 
+	| column_name 
 	;
 
 column_name
-	: IDENTIFIER { if (to_print) printf("found a column name '%s'\n", $1); }
+	: IDENTIFIER
 	;
 
 table_name
-	: IDENTIFIER { puts_mod("found a table name"); }
+	: IDENTIFIER 
 	;
 
 table
 	: table_def
 	| table ',' table_def
-	| table_def join table_def
+	| table join table_def
 	;
 
 join_condition
@@ -239,17 +259,19 @@ join_condition
 	;
 
 table_def
-	: table_name
-	| table_name AS IDENTIFIER
-	| table_name IDENTIFIER
+	: table_name opt_alias
 	;
 
 join
-	: JOIN
-	| INNER JOIN
+	: default_join
 	| LEFT opt_outer JOIN
 	| RIGHT opt_outer JOIN
 	| NATURAL JOIN
+	| FULL OUTER JOIN
+	;
+
+default_join
+	: JOIN | CROSS JOIN | INNER JOIN
 	;
 
 opt_outer
@@ -258,22 +280,22 @@ opt_outer
 	;
 
 insert_into
-	: INSERT INTO table_name column_names VALUES '(' values_list ')' { puts_mod("you inserted something.");}
+	: INSERT INTO table_name opt_column_names VALUES '(' values_list ')' 
 	;
 
-column_names
+opt_column_names
 	: '(' column_names_list ')'
 	| /* empty */
 	;
 
 column_names_list
 	: column_name
-	| column_name ',' column_names_list
+	| column_names_list ',' column_name
 	;
 
 values_list
 	: literal_value
-	| literal_value ',' values_list
+	| values_list ',' literal_value
 	;
 
 literal_value

@@ -1,0 +1,60 @@
+sql_queries ::= ((create_table|insert_into|delete_from|select)? ';')+
+
+create_table ::= CREATE TABLE table_name '(' column_dec_list ')' 
+
+column_dec_list ::= column_dec (',' column_dec)* 
+
+column_dec ::= column_name type ('(' INT_LITERAL ')')? (constraint)* | key_dec
+
+type ::= INT | DOUBLE | CHAR | VARCHAR | TEXT
+
+constraint ::= NOT NULL | UNIQUE | PRIMARY KEY
+            | FOREIGN KEY REFERENCES table_name ('(' column_name ')')?
+            | DEFAULT (literal_value | AUTO INCREMENT)
+            | CHECK bool_expression
+
+key_dec ::= PRIMARY KEY '(' column_names_list ')'
+         | FOREIGN KEY '(' column_name ')' REFERENCES table_name ('(' column_name ')')?
+
+insert_into ::= INSERT INTO table_name 
+                ('(' column_name (',' column_name)* ')')? 
+                VALUES '(' literal_value (',' literal_value)* ')'
+
+literal_value ::= INT_LITERAL | DOUBLE_LITERAL | STRING_LITERAL
+
+delete_from ::= DELETE FROM table_name where_condition
+
+select ::= select_statement ((UNION | INTERSECT | EXCEPT) select_statement)*
+
+select_statement ::= SELECT (DISTINCT)? expression_list FROM table (select_constraint)*
+                  | '(' select_statement ')'
+
+select_constraint ::= ON bool_expression
+                   | USING '(' column_names_list ')'
+                   | WHERE bool_expression
+                   | ORDER BY column_name (ASC | DESC)?
+
+bool_expression ::= bool_term ((AND | OR) bool_term)*
+
+bool_term ::= expression ('=' | '>' | '<' | GEQ | LEQ | NEQ) expression
+           | expression IN '(' select ')'
+           | '(' bool_expression ')'
+           | NOT bool_term
+
+expression_list ::= expression (',' expression)*
+
+expression ::= term (('+'|'-'|'*'|'/') term)*
+
+term ::= literal_value
+   | (table_name '.')? (column_name | '*' | NULL)
+   | '(' expression ')'
+   | (COUNT | SUM | AVG | MIN | MAX) '(' expression ')'
+   | '-' term 
+
+column_name ::= IDENTIFIER 
+
+table_name ::= IDENTIFIER 
+
+table ::= table_name ((AS)? IDENTIFIER)? ((',' | join) table_name)*
+
+join ::= (CROSS | INNER | (LEFT | RIGHT) (OUTER)? | NATURAL)? JOIN
