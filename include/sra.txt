@@ -36,7 +36,7 @@ typedef struct RATable {
 } RATable;
 
 typedef struct RASelect {
-   RAExpression *expr;
+   Condition *expr;
    RA *ra;
 } RASelect;
 
