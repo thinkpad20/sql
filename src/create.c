@@ -50,6 +50,23 @@ void printConstraint(void *constraint_voidp) {
    switch(constraint->t) {
       case CONS_DEFAULT:
          printf("Default");
+         switch (constraint->constraint.default_val.t) {
+            case TYPE_CHAR:
+               printf(" %c", constraint->constraint.default_val.val.cval);
+               break;
+            case TYPE_INT:
+               printf(" %d", constraint->constraint.default_val.val.ival);
+               break;
+            case TYPE_DOUBLE:
+               printf(" %f", constraint->constraint.default_val.val.dval);
+               break;
+            case TYPE_VARCHAR:
+            case TYPE_TEXT:
+               printf(" %s", constraint->constraint.default_val.val.strval);
+               break;
+            default:
+               printf(" (unknown literalval)");
+         }
          break;
       case CONS_PRIMARY_KEY:
          printf("Primary Key");

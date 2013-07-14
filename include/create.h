@@ -41,13 +41,13 @@ typedef struct Constraint {
 typedef struct ChiColumn {
    char *name;
    enum data_type type;
-   unsigned num_constraints;
+   size_t num_constraints;
    Constraint **constraints;
 } ChiColumn;
 
 typedef struct ChiTable {
    char *name;
-   unsigned num_cols, num_primary_keys, num_foreign_keys;
+   size_t num_cols, num_primary_keys;
    ChiColumn **columns;
    unsigned *primary_keys;
 } ChiTable;
