@@ -6,6 +6,9 @@ ChiInsert *InsertInto(RA *ra, StrList *opt_col_names, LiteralVal *values) {
    new_insert->ra = ra;
    new_insert->col_names = opt_col_names;
    new_insert->values = values;
+   if (!values)
+      fprintf(stderr, "Warning: no values given to insert\n");
+   
    /* if there are any column names specified, ensure equal cardinality */
    if (opt_col_names) {
       while(true) {
