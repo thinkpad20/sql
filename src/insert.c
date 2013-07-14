@@ -1,44 +1,62 @@
-#include "insert.h"
+#include "../include/insert.h"
+#include "../include/ra.h"
 
-Data *Int(int i) {
-   Data *new_data = (Data *)malloc(sizeof(Data));
-   new_data->t = TYPE_INT;
-   new_data->data.Int = i;
-   return new_data;
-}
-
-Data *Char(char c) {
-   Data *new_data = (Data *)malloc(sizeof(Data));
-   new_data->t = TYPE_CHAR;
-   new_data->data.Char = c;
-   return new_data;
-}
-
-Data *Varchar(const char *str) {
-   Data *new_data = (Data *)malloc(sizeof(Data));
-   new_data->t = TYPE_VARCHAR;
-   new_data->data.Varchar = strdup(str);
-   return new_data;
-}
-
-Data *Text(const char *str) {
-   Data *new_data = (Data *)malloc(sizeof(Data));
-   new_data->t = TYPE_TEXT;
-   new_data->data.Text = strdup(str);
-   return new_data;
-}
-
-Insert *_Insert(RA *ra, unsigned num_data, ...) {
-   Insert *new_insert = (Insert *)malloc(sizeof(Insert));
-   va_list argp;
-   int i, j=0;
-   va_start(argp, num_data);
+ChiInsert *InsertInto(RA *ra, StrList *opt_col_names, LiteralVal *values) {
+   ChiInsert *new_insert = (ChiInsert *)calloc(1, sizeof(ChiInsert));
    new_insert->ra = ra;
-   new_insert->num_data = num_data;
-   if (num_data > 0) 
-      new_insert->data = malloc(num_data * sizeof(Data));
-   for (i=0; i<num_data; ++i) {
-      new_insert->data[j++] = va_arg(argp, Data *);
+   new_insert->col_names = opt_col_names;
+   new_insert->values = values;
+   /* if there are any column names specified, ensure equal cardinality */
+   if (opt_col_names) {
+      while(true) {
+         if (opt_col_names && !values) {
+            fprintf(stderr, "Error: more column names specified than values\n");
+            return NULL;
+         }
+         else if (!opt_col_names && values) {
+            fprintf(stderr, "Error: more values specified than column names\n");
+            return NULL;
+         } else if (!opt_col_names && !values) {
+            /* then both are the same cardinality, OK */
+            break;
+         }
+         opt_col_names = opt_col_names->next;
+         values = values->next;
+      }
    }
    return new_insert;
+}
+
+void printInsert(ChiInsert *insert) {
+   LiteralVal *val = insert->values;
+   int first = 1;
+   printf("Insert \n");
+   printf("[");
+   while (val) {
+      if (first) {
+         first = 0;
+      } else {
+         printf(", ");
+      }
+      printLiteralVal(val);
+      val = val->next;
+   }
+   printf("] into table:");
+   printRA(insert->ra);
+   printf("\n");
+   if (insert->col_names) {
+      StrList *list = insert->col_names;
+      first = 1;
+      printf("(cols [");
+      while (list) {
+         if (first) {
+            first = 0;
+         } else {
+            printf(", ");
+         }
+         printf("%s", list->str);
+         list = list->next;
+      }
+      printf("]\n");
+   }
 }

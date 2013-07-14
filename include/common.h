@@ -16,8 +16,15 @@ enum data_type {
    TYPE_INT,
    TYPE_DOUBLE,
    TYPE_CHAR,
-   TYPE_VARCHAR, 
    TYPE_TEXT
 };
+
+typedef struct StrList {
+   char *str;
+   struct StrList *next;
+} StrList;
+
+char *typeToString(enum data_type type, char *buf);
+StrList *strlist(const char *str, StrList *next);
 
 #endif

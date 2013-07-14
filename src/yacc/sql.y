@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include "../include/common.h"
 #include "../include/create.h"
-#include "../include/vector.h"
+#include "../include/literal.h"
+#include "../include/insert.h"
 
 void yyerror(char *s);
 int yylex(void);
@@ -14,20 +15,18 @@ int yydebug=0;
 int to_print = 0;
 int num_stmts = 0;
 
-extern vector_t *tables;
-
 %}
 
 %union {
 	double dval;
 	int ival;
 	char *strval;
-	vector_t *vector;
-	LiteralVal lval;
+	LiteralVal *lval;
 	Constraint *constr;
 	ForeignKeyReference fkeyref;
 	ChiColumn *col;
 	KeyDec *kdec;
+	StrList *slist;
 }
 
 %token CREATE TABLE INSERT INTO SELECT FROM WHERE FULL
@@ -44,14 +43,12 @@ extern vector_t *tables;
 
 %type <ival> column_type
 %type <strval> column_name table_name
-%type <vector> column_names_list opt_column_names key_dec_list
-%type <vector> opt_constraints constraints opt_key_dec_list
-%type <vector> column_dec_list
-%type <constr> constraint
-%type <lval> literal_value
+%type <slist> column_names_list opt_column_names
+%type <constr> opt_constraints constraints constraint
+%type <lval> literal_value values_list
 %type <fkeyref> references_stmt
-%type <col> column_dec
-%type <kdec> key_dec
+%type <col> column_dec column_dec_list
+%type <kdec> key_dec opt_key_dec_list key_dec_list
 
 %start sql_queries
 
@@ -77,29 +74,25 @@ sql_line
 create_table
 	: CREATE TABLE table_name '(' column_dec_list opt_key_dec_list ')' 
 		{
-			ChiTable *table = CreateTableFromVector($3, $5);
-			if ($6 != NULL)
-				table = add_key_decs(table, $6);
+			ChiTable *table = CreateTable($3, $5, $6);
 			add_table(table);
 		}
 	;
 
 column_dec_list
-	: column_dec { $$ = vector_withData(1, $1); }
-	| column_dec_list ',' column_dec { $$ = vector_push($1, $3); }
+	: column_dec { $$ = $1; }
+	| column_dec_list ',' column_dec 
+		{ 
+			printf("column_dec_list: %p column_dec: %p\n", $1, $3);
+			$$ = append_column($3, $1); 
+		}
 	;
 
 column_dec
 	: column_name column_type opt_constraints 
 		{ 
-			/*printf("column '%s' (%d)\n", $1, $2); */
-			if ($3 != NULL) {
-				/*printf("Constraints:\n");
-				printConstraints($3);*/
-				$$ = add_constraints(Column($1, $2), $3);
-			} else {
-				$$ = Column($1, $2);
-			}
+			/* printf("column '%s' (%d)\n", $1, $2); */
+			$$ = Column($1, $2, $3);
 		}
 	;
 
@@ -107,7 +100,7 @@ column_type
 	: INT 			{ $$ = TYPE_INT; }
 	| DOUBLE 		{ $$ = TYPE_DOUBLE; }
 	| CHAR 			{ $$ = TYPE_CHAR; }
-	| VARCHAR 		{ $$ = TYPE_VARCHAR; }
+	| VARCHAR 		{ $$ = TYPE_TEXT; }
 	| TEXT 			{ $$ = TYPE_TEXT; }
 	| column_type '(' INT_LITERAL ')' 
 		{ 
@@ -123,8 +116,8 @@ opt_key_dec_list
 	;
 
 key_dec_list
-	: key_dec {$$ = vector_withData(1, $1); }
-	| key_dec_list ',' key_dec { $$ = vector_push($1, $3); }
+	: key_dec { $$ = $1; }
+	| key_dec_list ',' key_dec { $$ = append_key_dec($1, $3); }
 	;
 
 key_dec
@@ -164,7 +157,7 @@ constraint
 	| DEFAULT literal_value { $$ = Default($2); }
 	| AUTO_INCREMENT { $$ = AutoIncrement(); }
 	| CHECK bool_expression { $$ = Check(NULL); 
-									  fprintf(stderr, "Warning, check not yet supported\n"); }
+									  fprintf(stderr, "Warning, check not (yet) supported\n"); }
 	;
 
 select
@@ -332,24 +325,24 @@ opt_column_names
 	;
 
 column_names_list
-	: column_name { $$ = vector_withData(1, $1); }
-	| column_names_list ',' column_name { $$ = vector_push($1, $3); }
+	: column_name { $$ = strlist($1, NULL); }
+	| column_names_list ',' column_name { $$ = strlist($3, $1); }
 	;
 
 values_list
-	: literal_value
-	| values_list ',' literal_value
+	: literal_value { $$ = $1; }
+	| values_list ',' literal_value { $$ = appendLiteralVal($1, $3); }
 	;
 
 literal_value
-	: INT_LITERAL { $$ = makeLiteralVal(TYPE_INT, (union LitVal)$1); }
-	| DOUBLE_LITERAL { $$ = makeLiteralVal(TYPE_DOUBLE, (union LitVal)$1); }
+	: INT_LITERAL { $$ = litInt($1); }
+	| DOUBLE_LITERAL { $$ = litDouble($1); }
 	| STRING_LITERAL
 		{
 			if (strlen($1) == 1)
-				$$ = makeLiteralVal(TYPE_CHAR, (union LitVal)($1[0]));
+				$$ = litChar($1[0]);
 			else
-				$$ = makeLiteralVal(TYPE_TEXT, (union LitVal)$1);
+				$$ = litText($1);
 		}
 	;
 

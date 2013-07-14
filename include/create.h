@@ -2,6 +2,7 @@
 #define __CREATE_H_
 
 #include "common.h"
+#include "literal.h"
 
 enum constraint_type {
    CONS_NOT_NULL,
@@ -17,39 +18,27 @@ typedef struct ForeignKeyReference {
    const char *col_name, *table_name, *table_col_name;
 } ForeignKeyReference;
 
-union LitVal {
-   int ival;
-   double dval;
-   char cval;
-   char *strval;
-};
-
-typedef struct LiteralVal {
-   enum data_type t;
-   union LitVal val;
-} LiteralVal;
-
 typedef struct Constraint {
    enum constraint_type t;
    union {
       ForeignKeyReference ref;
-      LiteralVal default_val;
+      LiteralVal *default_val;
       Condition *check;
    } constraint;
+   struct Constraint *next;
 } Constraint;
 
 typedef struct ChiColumn {
    char *name;
    enum data_type type;
    size_t num_constraints;
-   Constraint **constraints;
+   Constraint *constraints;
+   struct ChiColumn *next;
 } ChiColumn;
 
 typedef struct ChiTable {
    char *name;
-   size_t num_cols, num_primary_keys;
-   ChiColumn **columns;
-   unsigned *primary_keys;
+   ChiColumn *columns;
 } ChiTable;
 
 enum key_dec_type {KEY_DEC_PRIMARY, KEY_DEC_FOREIGN};
@@ -57,41 +46,39 @@ enum key_dec_type {KEY_DEC_PRIMARY, KEY_DEC_FOREIGN};
 typedef struct KeyDec {
    enum key_dec_type t; 
    union {
-      vector_t *primary_keys;
+      StrList *primary_keys;
       ForeignKeyReference fkey;
    } dec;
+   struct KeyDec *next;
 } KeyDec;
 
-ChiTable *CreateTable(const char *name, unsigned num_cols, ...);
-ChiTable *CreateTableFromVector(const char *name, vector_t *vec);
+ChiTable *CreateTable(const char *name, ChiColumn *columns, KeyDec *decs);
 
 /* setting primary and foreign keys outside of columns */
-ChiTable *add_key_decs(ChiTable *table, vector_t *decs);
-vector_t *append_key_dec(vector_t *decs, KeyDec *dec);
+ChiTable *add_key_decs(ChiTable *table, KeyDec *decs);
+KeyDec *append_key_dec(KeyDec *decs, KeyDec *dec);
 KeyDec *ForeignKeyDec(ForeignKeyReference fkr);
-KeyDec *PrimaryKeyDec(vector_t *col_names);
+KeyDec *PrimaryKeyDec(StrList *col_names);
 
 /* constraints on single columns */
 ForeignKeyReference makeFullFKeyReference(const char *cname, ForeignKeyReference fkey);
 ForeignKeyReference makeFKeyReference(const char *foreign_tname,
                                       const char *foreign_cname);
-LiteralVal makeLiteralVal(enum data_type type, union LitVal val);
+
 Constraint *NotNull(void);
 Constraint *AutoIncrement(void);
 Constraint *PrimaryKey(void);
 Constraint *ForeignKey(ForeignKeyReference fkr);
-Constraint *Default(LiteralVal val);
+Constraint *Default(LiteralVal *val);
 Constraint *Unique(void);
 Constraint *Check(Condition *cond);
-vector_t *append_constraint(vector_t *constraints, Constraint *constraint);
-ChiColumn *add_constraints(ChiColumn *column, vector_t *constraints);
-ChiColumn *add_constraint(ChiColumn *column, Constraint *constraints);
-ChiColumn *Column(const char *name, enum data_type type);
+Constraint *append_constraint(Constraint *constraints, Constraint *constraint);
+ChiColumn *Column(const char *name, enum data_type type, Constraint *constraints);
+ChiColumn *append_column(ChiColumn *columns, ChiColumn *column);
 void printConstraint(void *constraint);
-void printConstraints(vector_t *constraints);
+void printConstraints(Constraint *constraints);
 void printTable(ChiTable *table);
 
-void deleteColumn(ChiColumn *column);
 void deleteTable(ChiTable *table);
 
 extern vector_t *tables;

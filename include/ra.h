@@ -105,13 +105,13 @@ struct Condition {
 void printCondition(Condition *expr);
 void printRA(RA *ra);
 
-RA *Table (const char *name);
-RA *Select (RA *ra, Condition *expr);
-RA *Project (RA *ra, unsigned num_cols, ...);
-RA *Union (RA *ra1, RA *ra2);
-RA *Difference (RA *ra1, RA *ra2);
-RA *Cross (RA *ra1, RA *ra2);
-RA *Rename (RA *ra, const char *table_name, unsigned num_col_names, ...);
+RA *Table(const char *name);
+RA *Sigma(RA *ra, Condition *expr);
+RA *Pi(RA *ra, unsigned num_cols, ...);
+RA *Union(RA *ra1, RA *ra2);
+RA *Difference(RA *ra1, RA *ra2);
+RA *Cross(RA *ra1, RA *ra2);
+RA *Rho(RA *ra, const char *table_name, unsigned num_col_names, ...);
 
 void deleteRA(RA *ra);
 

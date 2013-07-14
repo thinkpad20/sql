@@ -3,12 +3,13 @@
 
 #include "common.h"
 
-typedef struct Delete {
+typedef struct ChiDelete {
    RA *ra;
    Condition *where;
-} Delete;
+} ChiDelete;
 
-Delete *_Delete(RA *ra, Condition *where);
+ChiDelete *Delete(RA *ra, Condition *where);
 
-void deleteDelete(Delete *del);
+void deleteChiDelete(ChiDelete *del);
+
 #endif

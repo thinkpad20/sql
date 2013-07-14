@@ -24,6 +24,8 @@ typedef struct List {
 
 
 void list_init(struct List *, void (*del) (void *));
+List *list_initWith(void *elem);
+List *list_initWithN(size_t n, ...);
 void list_destroy(struct List *l);
 
 void *list_findByInt(struct List *l, int (*toInt) (void *), int i);

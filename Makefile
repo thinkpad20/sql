@@ -1,4 +1,4 @@
-DEPS = bin/vector.o bin/create.o bin/ra.o
+DEPS = bin/vector.o bin/create.o bin/ra.o bin/literal.o bin/common.o
 
 all: bin/sql_parser
 	@echo "Finished! Run ./parsesql.sh <filename> to run the parser."
@@ -23,7 +23,15 @@ bin/create.o: src/create.c
 bin/ra.o: src/ra.c
 	$(CC) -c src/ra.c -o bin/ra.o
 
-bin/sql_parser: src/y.tab.c src/lex.yy.c bin/vector.o bin/create.o bin/ra.o
+bin/literal.o: src/literal.c
+	$(CC) -c src/literal.c -o bin/literal.o
+
+bin/common.o: src/common.c
+	$(CC) -c src/common.c -o bin/common.o
+
+deps: bin/vector.o bin/create.o bin/ra.o bin/literal.o bin/common.o
+
+bin/sql_parser: src/y.tab.c src/lex.yy.c deps
 	@mkdir -p bin
 	$(CC) -o bin/sql_parser src/y.tab.c src/lex.yy.c $(DEPS) -ly -ll
 
