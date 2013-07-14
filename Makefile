@@ -1,3 +1,5 @@
+DEPS = bin/vector.o bin/create.o bin/ra.o
+
 all: bin/sql_parser
 	@echo "Finished! Run ./parsesql.sh <filename> to run the parser."
 
@@ -12,9 +14,18 @@ src/y.tab.c: src/yacc/sql.y
 	@mkdir -p src/auxfiles
 	@mv y.output src/auxfiles
 
-bin/sql_parser: src/y.tab.c src/lex.yy.c
+bin/vector.o: src/vector.c
+	$(CC) -c src/vector.c -o bin/vector.o
+
+bin/create.o: src/create.c
+	$(CC) -c src/create.c -o bin/create.o
+
+bin/ra.o: src/ra.c
+	$(CC) -c src/ra.c -o bin/ra.o
+
+bin/sql_parser: src/y.tab.c src/lex.yy.c bin/vector.o bin/create.o bin/ra.o
 	@mkdir -p bin
-	$(CC) -o bin/sql_parser src/y.tab.c src/lex.yy.c -ly -ll
+	$(CC) -o bin/sql_parser src/y.tab.c src/lex.yy.c $(DEPS) -ly -ll
 
 test: all
 	@./parsesql.sh tests/selecttest.sql
@@ -25,3 +36,6 @@ test: all
 cleanup:
 	-rm test.tab.cacc
 	-rm y.output
+
+clean:
+	rm bin/*

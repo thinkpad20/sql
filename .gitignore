@@ -1,4 +1,4 @@
 bin/*
-src/*.c
-src/*.h
+src/y.tab.*
+src/lex.yy.c
 src/auxfiles/*

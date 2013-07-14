@@ -1,4 +1,7 @@
 %{
+#include "../include/common.h"
+#include "../include/create.h"
+#include "../include/vector.h"
 #include "y.tab.h"
 #include <math.h>
 extern int yydebug;
@@ -44,8 +47,7 @@ right 						{ return RIGHT; }
 natural 						{ return NATURAL; }
 union 						{ return UNION; }
 values 						{ return VALUES; }
-auro 							{ return AUTO; }
-increment 					{ return INCREMENT; }
+auto_increment 			{ return AUTO_INCREMENT; }
 asc 							{ return ASC; }
 desc 							{ return DESC; }
 unique                  { return UNIQUE; }
@@ -63,7 +65,8 @@ using                   { return USING; }
 ((\"[^\"]*\")|(\'[^\']*\')) 	{ yylval.strval = strdup(yytext); return STRING_LITERAL; }
 [+-]?[0-9]+ 				{ yylval.ival = atoi(yytext); return INT_LITERAL; }
 ([0-9]+|([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?)	{ yylval.dval = atof(yytext); return DOUBLE_LITERAL; }
-[ \t\r\n]+                  { /* ignore */ }
+[ \t\r]+                  { /* ignore */ }
+\n                      { yylineno++; }
 .                       { if (yydebug) printf("lexed single character '%c'\n", yytext[0]); 
                           return yytext[0]; }
 

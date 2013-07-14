@@ -1,11 +1,16 @@
-   #include <stdio.h>
-   #include <stdlib.h>
-   #include <string.h>
-   #include <stdarg.h>
+#ifndef __COMMON_H_
+#define __COMMON_H_
 
-   /* Forward declarations */
-   typedef struct RA RA;
-   typedef struct Condition Condition;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include "vector.h"
+#include "list.h"
+
+/* Forward declarations */
+typedef struct RA RA;
+typedef struct Condition Condition;
 
 enum data_type {
    TYPE_INT,
@@ -14,3 +19,5 @@ enum data_type {
    TYPE_VARCHAR, 
    TYPE_TEXT
 };
+
+#endif

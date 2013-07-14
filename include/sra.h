@@ -6,37 +6,57 @@
 /*
 SQL:
 select f.a as Col1, g.a as Col2 from Foo f, Foo g where Col1 != Col2;
+
 --> To SRA:
-ProjectAs([f.a, g.a], [Col1, Col2],
-   Select(Col1 != Col2,
-      JoinAs([Foo, Foo], [f, g])
+Pi([(f,a,Col1), (g,a,Col2)],
+   Sigma(Col1 != Col2,
+      Join([(Foo,f), (Foo,g)])
    )
 )
+
 --> To RA:
-Project([Col1, Col2],
-   Select(Col1 != Col2,
+Pi([Col1, Col2],
+   Sigma(Col1 != Col2,
       Cross(
-         Rename(f, [Col1], Foo),
-         Rename(g, [Col2], Foo)
+         Rho(Foo, f, [Col1]),
+         Rho(Foo, g, [Col2])
       )
    )
 )
 */
 
 /*
-data SRA = Table String
-         | Project [String] [String] SRA  --second string is "as"
-         | Select Expression SRA
-         | NaturalJoin [SRA] [String]
-         | Join [SRA] [String]
-         | JoinUsing String [SRA] [String]
-         | OuterJoin SRA SRA String String Type
+data SRA = Table TableName
+         | Pi [Alias] SRAAlias
+         | Sigma Condition SRA
+         | NaturalJoin [SRA]
+         | Join [SRA] (Maybe JoinCondition)
+         | OuterJoin [SRA] OJType (Maybe JoinCondition)
          | Union SRA SRA
          | Difference SRA SRA
          | Intersect SRA SRA
-         | Rename SRA String
 
-data Type = Left | Right | Full
+data OJType = Left 
+            | Right 
+            | Full
+
+data ColumnName = ColumnName (Maybe String) String
+data TableName = TableName String (Maybe String)
+data JoinCondition = On Condition
+                   | Using [String]
+
+data Expression = ColumnRef ColumnName
+                | LitInt Integer
+                | LitDouble Double
+                | LitChar Char
+                | LitText String
+                | Concat Expression Expression
+                | Add Expression Expression
+                | Subtract Expression Expression
+                | Multiply Expression Expression
+                | Divide Expression Expression
+
+data Alias = Alias Expression (Maybe String) -- for naming expressions
 */
 
 typedef struct SRA {

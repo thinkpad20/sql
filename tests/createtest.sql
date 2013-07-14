@@ -1,7 +1,8 @@
 CREATE TABLE Users (
    id int NOT NULL, 
    username text(50),
-   fullname text(250), 
+   fullname text(250),
+   gender char,
    PRIMARY KEY (id)
 );
 

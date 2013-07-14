@@ -18,27 +18,27 @@ typedef struct RATable {
    char *name;
 } RATable;
 
-typedef struct RASelect {
+typedef struct RASigma {
    Condition *expr;
    RA *ra;
-} RASelect;
+} RASigma;
 
-typedef struct RAProject {
+typedef struct RAPi {
    unsigned num_cols;
    char **cols;
    RA *ra;
-} RAProject;
+} RAPi;
 
 typedef struct RABinary {
    RA *ra1, *ra2;
 } RABinary;
 
-typedef struct RARename {
+typedef struct RARho {
    char *table_name;
    unsigned num_col_names;
    char **col_names;
    RA *ra;
-} RARename;
+} RARho;
 
 enum RAType {
    RA_TABLE, 
@@ -54,31 +54,31 @@ struct RA {
    enum RAType t;
    union {
       RATable table;
-      RASelect select;
-      RAProject project;
+      RASigma sigma;
+      RAPi pi;
       RABinary binary;
-      RARename _rename;
+      RARho rho;
    } ra;
 };
 
 /*
-data Expression = Eq String String
+data Condition = Eq String String
                 | Lt String String
                 | Gt String String
-                | And Expression Expression
-                | Or Expression Expression
-                | Not Expression
+                | And Condition Condition
+                | Or Condition Condition
+                | Not Condition
 */
 
 typedef struct CondComp {
    char *col1, *col2;
 } CondComp;
 
-typedef struct CondAnd {
+typedef struct CondBinary {
    Condition *expr1, *expr2;
 } CondBinary;
 
-typedef struct CondNot {
+typedef struct CondUnary {
    Condition *expr;
 } CondUnary;
 
@@ -102,7 +102,7 @@ struct Condition {
    } expr;
 };
 
-void printExp(Condition *expr);
+void printCondition(Condition *expr);
 void printRA(RA *ra);
 
 RA *Table (const char *name);
