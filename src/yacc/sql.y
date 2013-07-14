@@ -6,6 +6,7 @@
 #include "../include/create.h"
 #include "../include/literal.h"
 #include "../include/insert.h"
+#include "../include/ra.h"
 
 void yyerror(char *s);
 int yylex(void);
@@ -27,6 +28,7 @@ int num_stmts = 0;
 	ChiColumn *col;
 	KeyDec *kdec;
 	StrList *slist;
+	ChiInsert *ins;
 }
 
 %token CREATE TABLE INSERT INTO SELECT FROM WHERE FULL
@@ -49,6 +51,7 @@ int num_stmts = 0;
 %type <fkeyref> references_stmt
 %type <col> column_dec column_dec_list
 %type <kdec> key_dec opt_key_dec_list key_dec_list
+%type <ins> insert_into
 
 %start sql_queries
 
@@ -83,7 +86,6 @@ column_dec_list
 	: column_dec { $$ = $1; }
 	| column_dec_list ',' column_dec 
 		{ 
-			printf("column_dec_list: %p column_dec: %p\n", $1, $3);
 			$$ = append_column($3, $1); 
 		}
 	;
@@ -316,7 +318,11 @@ opt_outer
 	;
 
 insert_into
-	: INSERT INTO table_name opt_column_names VALUES '(' values_list ')' 
+	: INSERT INTO table_name opt_column_names VALUES '(' values_list ')'
+		{
+			$$ = InsertInto(Table($3), $4, $7);
+			printInsert($$);
+		}
 	;
 
 opt_column_names
@@ -331,7 +337,11 @@ column_names_list
 
 values_list
 	: literal_value { $$ = $1; }
-	| values_list ',' literal_value { $$ = appendLiteralVal($1, $3); }
+	| values_list ',' literal_value 
+		{ 
+			$$ = appendLiteralVal($3, $1); 
+
+		}
 	;
 
 literal_value

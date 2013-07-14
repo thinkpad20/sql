@@ -30,7 +30,7 @@ ChiInsert *InsertInto(RA *ra, StrList *opt_col_names, LiteralVal *values) {
 void printInsert(ChiInsert *insert) {
    LiteralVal *val = insert->values;
    int first = 1;
-   printf("Insert \n");
+   printf("Insert ");
    printf("[");
    while (val) {
       if (first) {
@@ -41,13 +41,12 @@ void printInsert(ChiInsert *insert) {
       printLiteralVal(val);
       val = val->next;
    }
-   printf("] into table:");
+   printf("] into ");
    printRA(insert->ra);
-   printf("\n");
    if (insert->col_names) {
       StrList *list = insert->col_names;
       first = 1;
-      printf("(cols [");
+      printf(" using columns [");
       while (list) {
          if (first) {
             first = 0;
@@ -57,6 +56,7 @@ void printInsert(ChiInsert *insert) {
          printf("%s", list->str);
          list = list->next;
       }
-      printf("]\n");
+      printf("]");
    }
+   puts("");
 }
