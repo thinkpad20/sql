@@ -91,7 +91,7 @@ ChiTable *add_foreign_key(ChiTable *table, ForeignKeyReference fkr) {
 void printConstraints(Constraint *constraints) {
    int first = 1;
    if (constraints) {
-      printf("[");
+      printf(" [");
       for (; constraints; constraints = constraints->next) {
          if (first) {
             first = 0;
