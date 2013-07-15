@@ -2,6 +2,7 @@
 #define __RA_H_
 
 #include "common.h"
+#include "condition.h"
 
 /*
 RA in Haskell
@@ -14,95 +15,53 @@ data RA = Table String
         | Rename String [String] RA
 */
 
-typedef struct RATable {
+typedef struct RA_Table {
    char *name;
-} RATable;
+} RA_Table;
 
-typedef struct RASigma {
-   Condition *expr;
+typedef struct RA_Sigma {
+   Condition *cond;
    RA *ra;
-} RASigma;
+} RA_Sigma;
 
-typedef struct RAPi {
+typedef struct RA_Pi {
    unsigned num_cols;
    char **cols;
    RA *ra;
-} RAPi;
+} RA_Pi;
 
-typedef struct RABinary {
+typedef struct RA_Binary {
    RA *ra1, *ra2;
-} RABinary;
+} RA_Binary;
 
-typedef struct RARho {
+typedef struct RA_Rho {
    char *table_name;
    unsigned num_col_names;
    char **col_names;
    RA *ra;
-} RARho;
+} RA_Rho;
 
-enum RAType {
+enum RA_Type {
    RA_TABLE, 
-   RA_SELECT, 
-   RA_PROJECT, 
+   RA_SIGMA, 
+   RA_PI, 
    RA_UNION, 
    RA_DIFFERENCE, 
    RA_CROSS, 
-   RA_RENAME
+   RA_RHO
 };
 
 struct RA {
-   enum RAType t;
+   enum RA_Type t;
    union {
-      RATable table;
-      RASigma sigma;
-      RAPi pi;
-      RABinary binary;
-      RARho rho;
+      RA_Table table;
+      RA_Sigma sigma;
+      RA_Pi pi;
+      RA_Binary binary;
+      RA_Rho rho;
    } ra;
 };
 
-/*
-data Condition = Eq String String
-                | Lt String String
-                | Gt String String
-                | And Condition Condition
-                | Or Condition Condition
-                | Not Condition
-*/
-
-typedef struct CondComp {
-   char *col1, *col2;
-} CondComp;
-
-typedef struct CondBinary {
-   Condition *expr1, *expr2;
-} CondBinary;
-
-typedef struct CondUnary {
-   Condition *expr;
-} CondUnary;
-
-enum CondType {
-   RA_COND_EQ,
-   RA_COND_LT,
-   RA_COND_GT,
-   RA_COND_LEQ,
-   RA_COND_GEQ,
-   RA_COND_AND,
-   RA_COND_OR,
-   RA_COND_NOT,
-};
-
-struct Condition {
-   enum CondType t;
-   union {
-      CondComp comp;
-      CondBinary binary;
-      CondUnary unary;
-   } expr;
-};
-
-void printCondition(Condition *expr);
 void printRA(RA *ra);
 
 RA *Table(const char *name);
@@ -114,16 +73,5 @@ RA *Cross(RA *ra1, RA *ra2);
 RA *Rho(RA *ra, const char *table_name, unsigned num_col_names, ...);
 
 void deleteRA(RA *ra);
-
-Condition *Eq(const char *col1, const char *col2);
-Condition *Lt(const char *col1, const char *col2);
-Condition *Gt(const char *col1, const char *col2);
-Condition *Leq(const char *col1, const char *col2);
-Condition *Geq(const char *col1, const char *col2);
-Condition *And(Condition *expr1, Condition *expr2);
-Condition *Or(Condition *expr1, Condition *expr2);
-Condition *Not(Condition *expr);
-
-void deleteCondition(Condition *expr);
 
 #endif

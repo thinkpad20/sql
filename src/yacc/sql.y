@@ -38,6 +38,7 @@ int num_stmts = 0;
 %token JOIN INNER OUTER LEFT RIGHT NATURAL CROSS UNION
 %token VALUES AUTO_INCREMENT ASC DESC UNIQUE IN ON
 %token COUNT SUM AVG MIN MAX INTERSECT EXCEPT DISTINCT
+%token CONCAT TRUE FALSE CASE WHEN DECLARE BIT
 %token <strval> IDENTIFIER
 %token <strval> STRING_LITERAL
 %token <dval> DOUBLE_LITERAL
@@ -158,8 +159,8 @@ constraint
 	| FOREIGN KEY references_stmt { $$ = ForeignKey($3); }
 	| DEFAULT literal_value { $$ = Default($2); }
 	| AUTO_INCREMENT { $$ = AutoIncrement(); }
-	| CHECK bool_expression { $$ = Check(NULL); 
-									  fprintf(stderr, "Warning, check not (yet) supported\n"); }
+	| CHECK condition { $$ = Check(NULL); 
+									  fprintf(stderr, "Warning, check not (yet) supported in chiDB\n"); }
 	;
 
 select
@@ -198,7 +199,7 @@ select_constraint
 	;
 
 where_condition
-	: WHERE bool_expression 
+	: WHERE condition 
 	;
 
 orderby
@@ -207,15 +208,15 @@ orderby
 	| ORDER BY column_name DESC
 	;
 
-bool_expression
+condition
    : bool_term 
-   | bool_term bool_op bool_expression
+   | bool_term bool_op condition
    ;
 
 bool_term
    : expression comp_op expression
    | expression IN '(' select ')'
-   | '(' bool_expression ')'
+   | '(' condition ')'
    | NOT bool_term
    ;
 
@@ -234,13 +235,14 @@ expression_list
 
 expression
 	: expression '+' mulexp 
-	| expression '-' mulexp 
-	| mulexp 
+	| expression '-' mulexp
+	| mulexp
 	;
 
 mulexp
 	: mulexp '*' primary 
-	| mulexp '/' primary 
+	| mulexp '/' primary
+	| mulexp CONCAT primary
 	| primary 
 	;
 
@@ -292,7 +294,7 @@ table
 	;
 
 join_condition
-	: ON bool_expression
+	: ON condition
 	| USING '(' column_names_list ')'
 	;
 

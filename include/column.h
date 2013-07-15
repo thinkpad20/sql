@@ -9,6 +9,7 @@ enum constraint_type {
    CONS_DEFAULT,
    CONS_AUTO_INCREMENT,
    CONS_CHECK,
+   CONS_SIZE,
 };
 
 typedef struct ForeignKeyReference {
@@ -19,15 +20,37 @@ typedef struct Constraint {
    enum constraint_type t;
    union {
       ForeignKeyReference ref;
-      LiteralVal default_val;
+      LiteralVal *default_val;
+      unsigned size;
       Condition *check;
    } constraint;
+   struct Constraint *next;
 } Constraint;
 
 typedef struct ChiColumn {
    char *name;
    enum data_type type;
-   size_t num_constraints;
-   Constraint **constraints;
-   ChiColumn *next;
+   Constraint *constraints;
+   struct ChiColumn *next;
 } ChiColumn;
+
+/* constraints on single columns */
+ForeignKeyReference makeFullFKeyReference(const char *cname, ForeignKeyReference fkey);
+ForeignKeyReference makeFKeyReference(const char *foreign_tname,
+                                      const char *foreign_cname);
+
+Constraint *NotNull(void);
+Constraint *AutoIncrement(void);
+Constraint *PrimaryKey(void);
+Constraint *ForeignKey(ForeignKeyReference fkr);
+Constraint *Default(LiteralVal *val);
+Constraint *Unique(void);
+Constraint *Check(Condition *cond);
+Constraint *ColumnSize(unsigned size);
+Constraint *append_constraint(Constraint *constraints, Constraint *constraint);
+ChiColumn *Column(const char *name, enum data_type type, Constraint *constraints);
+ChiColumn *append_column(ChiColumn *columns, ChiColumn *column);
+
+void printConstraint(void *constraint);
+void printConstraints(Constraint *constraints);
+void deleteColumns(ChiColumn *column);

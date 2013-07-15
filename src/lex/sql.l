@@ -31,6 +31,7 @@ or 							{ return OR; }
 "<>"        				{ return NEQ; }
 ">="							{ return GEQ; }
 "<=" 							{ return LEQ; }
+"||"                    { return CONCAT; }
 references 					{ return REFERENCES; }
 order 						{ return ORDER; }
 by 							{ return BY; }
@@ -61,6 +62,10 @@ max                     { return MAX; }
 avg                     { return AVG; }
 on                      { return ON; }
 using                   { return USING; }
+true                    { return TRUE; }
+false                   { return FALSE; }
+false                   { return CASE; }
+when                    { return WHEN; }
 [a-zA-Z][a-zA-Z0-9_]*   { yylval.strval = strdup(yytext); 
                           if (yydebug) printf("lexed identifier '%s'\n", yytext); 
                           return IDENTIFIER; }

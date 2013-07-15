@@ -17,3 +17,7 @@ CREATE TABLE Likes (
    post_id int NOT NULL,
    FOREIGN KEY (post_id) REFERENCES Posts(id)
 );
+
+CREATE TABLE Hashtag (
+   content text(250) CHECK a != b
+);

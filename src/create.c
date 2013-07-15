@@ -57,20 +57,6 @@ void printConstraint(void *constraint_voidp) {
    }
 }
 
-ForeignKeyReference makeFullFKeyReference(const char *cname, ForeignKeyReference fkey) {
-   fkey.col_name = cname;
-   return fkey;
-}
-
-ForeignKeyReference makeFKeyReference(const char *foreign_tname,
-                                      const char *foreign_cname) {
-   ForeignKeyReference fkey;
-   fkey.col_name = NULL;
-   fkey.table_name = foreign_tname;
-   fkey.table_col_name = foreign_cname;
-   return fkey;
-}
-
 ChiTable *add_foreign_key(ChiTable *table, ForeignKeyReference fkr) {
    if (table != NULL) {
       /* find the column that matches the cname given, and add this reference */
@@ -86,22 +72,6 @@ ChiTable *add_foreign_key(ChiTable *table, ForeignKeyReference fkr) {
    }
    fprintf(stderr, "Error: table is null\n");
    return table;
-}
-
-void printConstraints(Constraint *constraints) {
-   int first = 1;
-   if (constraints) {
-      printf(" [");
-      for (; constraints; constraints = constraints->next) {
-         if (first) {
-            first = 0;
-         } else {
-            printf(", ");
-         }
-         printConstraint(constraints);
-      }
-      printf("]");
-   }
 }
 
 ChiTable *add_key_decs(ChiTable *table, KeyDec *decs) {
@@ -169,82 +139,10 @@ ChiTable *add_primary_keys(ChiTable *table, vector_t *col_names) {
    return table;
 }
 
-static void deleteConstraints(Constraint *constraint) {
-   if (constraint) {
-      Constraint *next = constraint->next;
-      switch (constraint->t) {
-         case CONS_DEFAULT:
-            deleteLiteralVal(constraint->constraint.default_val);
-            break;
-         case CONS_CHECK:
-            deleteCondition(constraint->constraint.check);
-            break;
-         default:
-            break;
-      }
-      deleteConstraints(next);
-   }
-}
-
-static void deleteColumns(ChiColumn *column) {
-   if (column) {
-      ChiColumn *next = column->next;
-      free(column->name);
-      deleteConstraints(column->constraints);
-      free(column);
-      deleteColumns(next);
-   }
-}
-
 void deleteCreate(ChiTable *table) {
    deleteColumns(table->columns);
    free(table->name);
    free(table);
-}
-
-Constraint *NotNull(void) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
-   con->t = CONS_NOT_NULL;
-   return con;
-}
-
-Constraint *AutoIncrement(void) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
-   con->t = CONS_AUTO_INCREMENT;
-   return con;
-}
-
-Constraint *PrimaryKey(void) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
-   con->t = CONS_PRIMARY_KEY;
-   return con;
-}
-
-Constraint *ForeignKey(ForeignKeyReference fkr) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
-   con->t = CONS_FOREIGN_KEY;
-   con->constraint.ref = fkr;
-   return con;
-}
-
-Constraint *Default(LiteralVal *val) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
-   con->t = CONS_DEFAULT;
-   con->constraint.default_val = val;
-   return con;
-}
-
-Constraint *Unique(void) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
-   con->t = CONS_UNIQUE;
-   return con;
-}
-
-Constraint *Check(Condition *cond) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
-   con->t = CONS_CHECK;
-   con->constraint.check = cond;
-   return con;
 }
 
 void printTable(ChiTable *table) {
