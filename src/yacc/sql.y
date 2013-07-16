@@ -10,6 +10,7 @@
 #include "../include/ra.h"
 #include "../include/condition.h"
 #include "../include/expression.h"
+#include "../include/delete.h"
 
 void yyerror(char *s);
 int yylex(void);
@@ -35,6 +36,7 @@ int num_stmts = 0;
 	Condition *cond;
 	Expression *expr;
 	ColumnReference *colref;
+	ChiDelete *del;
 }
 
 %token CREATE TABLE INSERT INTO SELECT FROM WHERE FULL
@@ -59,9 +61,10 @@ int num_stmts = 0;
 %type <col> column_dec column_dec_list
 %type <kdec> key_dec opt_key_dec_list key_dec_list
 %type <ins> insert_into
-%type <cond> condition bool_term
+%type <cond> condition bool_term where_condition
 %type <expr> expression mulexp primary expression_list term
 %type <colref> column_reference
+%type <del> delete_from
 
 %start sql_queries
 
@@ -218,7 +221,7 @@ select_constraint
 	;
 
 where_condition
-	: WHERE condition 
+	: WHERE condition { $$ = $2; }
 	;
 
 orderby
@@ -406,6 +409,11 @@ literal_value
 
 delete_from
 	: DELETE FROM table_name where_condition
+		{
+			$$ = makeDelete($3, $4);
+			printDelete($$);
+			puts("");
+		}
 	;
 
 %%

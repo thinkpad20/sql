@@ -8,8 +8,8 @@ typedef struct ChiDelete {
    Condition *where;
 } ChiDelete;
 
-ChiDelete *Delete(const char *table_name, Condition *where);
-
+ChiDelete *makeDelete(const char *table_name, Condition *where);
 void deleteDelete(ChiDelete *del);
+void printDelete(ChiDelete *del);
 
 #endif

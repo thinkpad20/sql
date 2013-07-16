@@ -1,15 +1,20 @@
 #include "../include/delete.h"
 #include "../include/ra.h"
 
-Delete *_Delete(RA *ra, Condition *where) {
-   Delete *new_delete = (Delete *)calloc(1, sizeof(Delete));
-   new_delete->ra = ra;
+ChiDelete *makeDelete(const char *table_name, Condition *where) {
+   ChiDelete *new_delete = (ChiDelete *)calloc(1, sizeof(ChiDelete));
+   new_delete->table_name = strdup(table_name);
    new_delete->where = where;
    return new_delete;
 }
 
-void deleteDelete(Delete *del) {
+void deleteDelete(ChiDelete *del) {
    deleteCondition(del->where);
-   deleteRA(del->ra);
+   free(del->table_name);
    free(del);
+}
+
+void printDelete(ChiDelete *del) {
+   printf("Delete from %s where ", del->table_name);
+   printCondition(del->where);
 }

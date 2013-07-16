@@ -4,6 +4,7 @@
 #include "../include/insert.h"
 #include "../include/ra.h"
 #include "../include/literal.h"
+#include "../include/delete.h"
 #include "y.tab.h"
 #include <math.h>
 extern int yydebug;
