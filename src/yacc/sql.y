@@ -99,7 +99,7 @@ column_dec_list
 	: column_dec { $$ = $1; }
 	| column_dec_list ',' column_dec 
 		{ 
-			$$ = append_column($3, $1); 
+			$$ = append_column($1, $3); 
 		}
 	;
 
@@ -126,7 +126,7 @@ column_type
 			}
 			set_size($3);
 			fprintf(stderr, "****WARNING: sized types (line %d) "
-					 "not supported in chiDB.\n", yylineno); 
+					 "not yet supported in chiDB.\n", yylineno); 
 		}
 	;
 
@@ -176,8 +176,8 @@ constraint
 	| FOREIGN KEY references_stmt { $$ = ForeignKey($3); }
 	| DEFAULT literal_value { $$ = Default($2); }
 	| AUTO_INCREMENT { $$ = AutoIncrement(); }
-	| CHECK condition { $$ = Check(NULL); 
-									  fprintf(stderr, "****WARNING, check not (yet) supported in chiDB\n"); }
+	| CHECK condition { $$ = Check($2); 
+									  fprintf(stderr, "****WARNING, check not yet supported in chiDB\n"); }
 	;
 
 select

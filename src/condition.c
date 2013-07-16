@@ -39,9 +39,15 @@ void printCondition(Condition *cond) {
          printCondition(cond->cond.binary.cond2);
          break;
       case RA_COND_NOT:
-         printf("not (");
-         printCondition(cond->cond.unary.cond);
-         printf(")");
+         if (cond->cond.unary.cond->t == RA_COND_EQ) {
+            printExpression(cond->cond.unary.cond->cond.comp.expr1);
+            printf(" <> ");
+            printExpression(cond->cond.unary.cond->cond.comp.expr2);
+         } else {
+            printf("not (");
+            printCondition(cond->cond.unary.cond);
+            printf(")");
+         }
          break;
       default:
          puts("Unknown condession type");
