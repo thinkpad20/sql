@@ -5,10 +5,10 @@
 
 typedef struct ChiDelete {
    char *table_name;
-   Condition *where;
+   Condition_t *where;
 } ChiDelete;
 
-ChiDelete *makeDelete(const char *table_name, Condition *where);
+ChiDelete *makeDelete(const char *table_name, Condition_t *where);
 void deleteDelete(ChiDelete *del);
 void printDelete(ChiDelete *del);
 

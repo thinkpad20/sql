@@ -1,123 +1,135 @@
 #include "../include/condition.h"
 
-void printCondition(Condition *cond) {
+void Condition_print(Condition_t *cond) {
    if (!cond) return; /* just in case */
    switch(cond->t) {
       case RA_COND_EQ:
-         printExpression(cond->cond.comp.expr1);
+         Expression_print(cond->cond.comp.expr1);
          printf(" = ");
-         printExpression(cond->cond.comp.expr2);
+         Expression_print(cond->cond.comp.expr2);
          break;
       case RA_COND_LT:
-         printExpression(cond->cond.comp.expr1);
+         Expression_print(cond->cond.comp.expr1);
          printf(" < ");
-         printExpression(cond->cond.comp.expr2);
+         Expression_print(cond->cond.comp.expr2);
          break;
       case RA_COND_GT:
-         printExpression(cond->cond.comp.expr1);
+         Expression_print(cond->cond.comp.expr1);
          printf(" > ");
-         printExpression(cond->cond.comp.expr2);
+         Expression_print(cond->cond.comp.expr2);
          break;
       case RA_COND_LEQ:
-         printExpression(cond->cond.comp.expr1);
+         Expression_print(cond->cond.comp.expr1);
          printf(" <= ");
-         printExpression(cond->cond.comp.expr2);
+         Expression_print(cond->cond.comp.expr2);
          break;
       case RA_COND_GEQ:
-         printExpression(cond->cond.comp.expr1);
+         Expression_print(cond->cond.comp.expr1);
          printf(" >= ");
-         printExpression(cond->cond.comp.expr2);
+         Expression_print(cond->cond.comp.expr2);
          break;
       case RA_COND_AND:
-         printCondition(cond->cond.binary.cond1);
+         Condition_print(cond->cond.binary.cond1);
          printf(" and ");
-         printCondition(cond->cond.binary.cond2);
+         Condition_print(cond->cond.binary.cond2);
          break;
       case RA_COND_OR:
-         printCondition(cond->cond.binary.cond1);
+         Condition_print(cond->cond.binary.cond1);
          printf(" or ");
-         printCondition(cond->cond.binary.cond2);
+         Condition_print(cond->cond.binary.cond2);
          break;
       case RA_COND_NOT:
          if (cond->cond.unary.cond->t == RA_COND_EQ) {
-            printExpression(cond->cond.unary.cond->cond.comp.expr1);
+            Expression_print(cond->cond.unary.cond->cond.comp.expr1);
             printf(" <> ");
-            printExpression(cond->cond.unary.cond->cond.comp.expr2);
+            Expression_print(cond->cond.unary.cond->cond.comp.expr2);
          } else {
             printf("not (");
-            printCondition(cond->cond.unary.cond);
+            Condition_print(cond->cond.unary.cond);
             printf(")");
          }
+         break;
+      case RA_COND_IN:
+         Expression_print(cond->cond.in.expr);
+         Literal_printList(cond->cond.in.values_list);
          break;
       default:
          puts("Unknown condession type");
    }
 }
 
-Condition *Eq(Expression *expr1, Expression *expr2) {
-   Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
+Condition_t *Eq(Expression_t *expr1, Expression_t *expr2) {
+   Condition_t *new_cond = (Condition_t *)calloc(1, sizeof(Condition_t));
    new_cond->t = RA_COND_EQ;
    new_cond->cond.comp.expr1 = expr1;
    new_cond->cond.comp.expr2 = expr2;
    return new_cond;
 }
 
-Condition *Lt(Expression *expr1, Expression *expr2) {
-   Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
+Condition_t *Lt(Expression_t *expr1, Expression_t *expr2) {
+   Condition_t *new_cond = (Condition_t *)calloc(1, sizeof(Condition_t));
    new_cond->t = RA_COND_LT;
    new_cond->cond.comp.expr1 = expr1;
    new_cond->cond.comp.expr2 = expr2;
    return new_cond;
 }
 
-Condition *Gt(Expression *expr1, Expression *expr2) {
-   Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
+Condition_t *Gt(Expression_t *expr1, Expression_t *expr2) {
+   Condition_t *new_cond = (Condition_t *)calloc(1, sizeof(Condition_t));
    new_cond->t = RA_COND_GT;
    new_cond->cond.comp.expr1 = expr1;
    new_cond->cond.comp.expr2 = expr2;
    return new_cond;
 }
 
-Condition *Leq(Expression *expr1, Expression *expr2) {
-   Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
+Condition_t *Leq(Expression_t *expr1, Expression_t *expr2) {
+   Condition_t *new_cond = (Condition_t *)calloc(1, sizeof(Condition_t));
    new_cond->t = RA_COND_LEQ;
    new_cond->cond.comp.expr1 = expr1;
    new_cond->cond.comp.expr2 = expr2;
    return new_cond;
 }
 
-Condition *Geq(Expression *expr1, Expression *expr2) {
-   Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
+Condition_t *Geq(Expression_t *expr1, Expression_t *expr2) {
+   Condition_t *new_cond = (Condition_t *)calloc(1, sizeof(Condition_t));
    new_cond->t = RA_COND_GEQ;
    new_cond->cond.comp.expr1 = (expr1);
    new_cond->cond.comp.expr2 = (expr2);
    return new_cond;
 }
 
-Condition *And(Condition *cond1, Condition *cond2) {
-   Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
+Condition_t *And(Condition_t *cond1, Condition_t *cond2) {
+   Condition_t *new_cond = (Condition_t *)calloc(1, sizeof(Condition_t));
    new_cond->t = RA_COND_AND;
    new_cond->cond.binary.cond1 = cond1;
    new_cond->cond.binary.cond2 = cond2;
    return new_cond;
 }
 
-Condition *Or(Condition *cond1, Condition *cond2) {
-   Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
+Condition_t *Or(Condition_t *cond1, Condition_t *cond2) {
+   Condition_t *new_cond = (Condition_t *)calloc(1, sizeof(Condition_t));
    new_cond->t = RA_COND_OR;
    new_cond->cond.binary.cond1 = cond1;
    new_cond->cond.binary.cond2 = cond2;
    return new_cond;
 }
 
-Condition *Not(Condition *cond) {
-   Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
+Condition_t *Not(Condition_t *cond) {
+   Condition_t *new_cond = (Condition_t *)calloc(1, sizeof(Condition_t));
    new_cond->t = RA_COND_NOT;
    new_cond->cond.unary.cond = cond;
    return new_cond;
 }
 
-void deleteCondition(Condition *cond) {
+Condition_t *In(Expression_t *expr, Literal_t *values_list) {
+   Condition_t *new_cond = (Condition_t *)calloc(1, sizeof(Condition_t));
+   new_cond->t = RA_COND_IN;
+   new_cond->cond.in.expr = expr;
+   new_cond->cond.in.values_list = values_list;
+   return new_cond;   
+}
+
+void Condition_delete(Condition_t *cond) {
    switch (cond->t) {
       case RA_COND_EQ:
       case RA_COND_LEQ:
@@ -129,11 +141,15 @@ void deleteCondition(Condition *cond) {
          break;
       case RA_COND_AND:
       case RA_COND_OR:
-         deleteCondition(cond->cond.binary.cond1);
-         deleteCondition(cond->cond.binary.cond2);
+         Condition_delete(cond->cond.binary.cond1);
+         Condition_delete(cond->cond.binary.cond2);
          break;
       case RA_COND_NOT:
-         deleteCondition(cond->cond.unary.cond);
+         Condition_delete(cond->cond.unary.cond);
+         break;
+      case RA_COND_IN:
+         Literal_deleteList(cond->cond.in.values_list);
+         deleteExpressionList(cond->cond.in.expr);
          break;
    }
    free(cond);

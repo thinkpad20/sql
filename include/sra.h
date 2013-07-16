@@ -28,7 +28,7 @@ Pi([Col1, Col2],
 /*
 data SRA = Table TableName
          | Pi [Alias] SRAAlias
-         | Sigma Condition SRA
+         | Sigma Condition_t SRA
          | NaturalJoin [SRA]
          | Join [SRA] (Maybe JoinCondition)
          | OuterJoin [SRA] OJType (Maybe JoinCondition)
@@ -42,21 +42,21 @@ data OJType = Left
 
 data ColumnName = ColumnName (Maybe String) String
 data TableName = TableName String (Maybe String)
-data JoinCondition = On Condition
+data JoinCondition_t = On Condition
                    | Using [String]
 
-data Expression = ColumnRef ColumnName
+data Expression_t = ColumnRef ColumnName
                 | LitInt Integer
                 | LitDouble Double
                 | LitChar Char
                 | LitText String
-                | Concat Expression Expression
-                | Add Expression Expression
-                | Subtract Expression Expression
-                | Multiply Expression Expression
-                | Divide Expression Expression
+                | Concat Expression_t Expression
+                | Add Expression_t Expression
+                | Subtract Expression_t Expression
+                | Multiply Expression_t Expression
+                | Divide Expression_t Expression
 
-data Alias = Alias Expression (Maybe String) -- for naming expressions
+data Alias = Alias Expression_t (Maybe String) -- for naming expressions
 */
 
 typedef struct SRA {

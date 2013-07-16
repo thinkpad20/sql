@@ -4,34 +4,34 @@
 #include "common.h"
 #include "column.h"
 
-typedef struct ChiTable {
+typedef struct Table_t {
    char *name;
-   ChiColumn *columns;
-} ChiTable;
+   Column_t *columns;
+} Table_t;
 
 enum key_dec_type {KEY_DEC_PRIMARY, KEY_DEC_FOREIGN};
 
-typedef struct KeyDec {
+typedef struct KeyDec_t {
    enum key_dec_type t; 
    union {
-      StrList *primary_keys;
-      ForeignKeyReference fkey;
+      StrList_t *primary_keys;
+      ForeignKeyRef_t fkey;
    } dec;
-   struct KeyDec *next;
-} KeyDec;
+   struct KeyDec_t *next;
+} KeyDec_t;
 
-ChiTable *CreateTable(const char *name, ChiColumn *columns, KeyDec *decs);
+Table_t *Table_make(const char *name, Column_t *columns, KeyDec_t *decs);
 
 /* setting primary and foreign keys outside of columns */
-ChiTable *add_key_decs(ChiTable *table, KeyDec *decs);
-KeyDec *append_key_dec(KeyDec *decs, KeyDec *dec);
-KeyDec *ForeignKeyDec(ForeignKeyReference fkr);
-KeyDec *PrimaryKeyDec(StrList *col_names);
+Table_t *Table_addKeyDecs(Table_t *table, KeyDec_t *decs);
+KeyDec_t *KeyDec_append(KeyDec_t *decs, KeyDec_t *dec);
+KeyDec_t *ForeignKeyDec(ForeignKeyRef_t fkr);
+KeyDec_t *PrimaryKeyDec(StrList_t *col_names);
 
-void printTable(ChiTable *table);
+void Table_print(Table_t *table);
 
-void deleteTable(ChiTable *table);
+void Table_delete(Table_t *table);
 
-void add_table(ChiTable *table);
+void add_table(Table_t *table);
 
 #endif

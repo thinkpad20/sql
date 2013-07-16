@@ -5,25 +5,31 @@
 #include "expression.h"
 
 /*
-data Condition = Eq Expression Expression
-               | Lt Expression Expression
-               | Gt Expression Expression
-               | And Condition Condition
-               | Or Condition Condition
+data Condition_t = Eq Expression_t Expression
+               | Lt Expression_t Expression
+               | Gt Expression_t Expression
+               | And Condition_t Condition
+               | Or Condition_t Condition
                | Not Condition
 */
 
 typedef struct CondComp {
-   Expression *expr1, *expr2;
+   Expression_t *expr1, *expr2;
 } CondComp;
 
 typedef struct CondBinary {
-   Condition *cond1, *cond2;
+   Condition_t *cond1, *cond2;
 } CondBinary;
 
 typedef struct CondUnary {
-   Condition *cond;
+   Condition_t *cond;
 } CondUnary;
+
+/* note: we might want to also let CondIn hold SELECT queries. */
+typedef struct CondIn {
+   Expression_t *expr;
+   Literal_t *values_list;
+} CondIn;
 
 enum CondType {
    RA_COND_EQ,
@@ -34,29 +40,31 @@ enum CondType {
    RA_COND_AND,
    RA_COND_OR,
    RA_COND_NOT,
+   RA_COND_IN,
 };
 
-struct Condition {
+
+struct Condition_t {
    enum CondType t;
    union {
       CondComp comp;
       CondBinary binary;
       CondUnary unary;
+      CondIn in;
    } cond;
 };
 
-Condition *Eq(Expression *expr1, Expression *expr2);
-Condition *Lt(Expression *expr1, Expression *expr2);
-Condition *Gt(Expression *expr1, Expression *expr2);
-Condition *Leq(Expression *expr1, Expression *expr2);
-Condition *Geq(Expression *expr1, Expression *expr2);
-Condition *And(Condition *cond1, Condition *cond2);
-Condition *Or(Condition *cond1, Condition *cond2);
-Condition *Not(Condition *cond);
+Condition_t *Eq(Expression_t *expr1, Expression_t *expr2);
+Condition_t *Lt(Expression_t *expr1, Expression_t *expr2);
+Condition_t *Gt(Expression_t *expr1, Expression_t *expr2);
+Condition_t *Leq(Expression_t *expr1, Expression_t *expr2);
+Condition_t *Geq(Expression_t *expr1, Expression_t *expr2);
+Condition_t *And(Condition_t *cond1, Condition_t *cond2);
+Condition_t *Or(Condition_t *cond1, Condition_t *cond2);
+Condition_t *Not(Condition_t *cond);
+Condition_t *In(Expression_t *expr, Literal_t *values_list);
 
-typedef Condition * (*binCondFunc) (Expression *, Expression *);
-
-void deleteCondition(Condition *cond);
-void printCondition(Condition *cond);
+void Condition_delete(Condition_t *cond);
+void Condition_print(Condition_t *cond);
 
 #endif

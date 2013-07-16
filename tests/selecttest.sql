@@ -4,4 +4,4 @@ SELECT (u.age * 4)/25 as b, p.content
    from Users u
    INNER JOIN Posts p
    ON u.id = p.user_id
-   WHERE a != -3 and b > 5 or c = a;
+   WHERE a != -3 and b > 5 or c = a and name in ("tom", "dick", "harry");

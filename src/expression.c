@@ -1,40 +1,40 @@
 #include "../include/expression.h"
 
-static void deleteExpression(Expression *expr);
+static void deleteExpression(Expression_t *expr);
 
-Expression *Term(const char *str) {
-   Expression *new_expr = (Expression *)calloc(1, sizeof(Expression));
+Expression_t *Term(const char *str) {
+   Expression_t *new_expr = (Expression_t *)calloc(1, sizeof(Expression_t));
    new_expr->t = EXPR_TERM;
    new_expr->expr.term.t = TERM_ID;
    new_expr->expr.term.id = strdup(str);
    return new_expr;
 }
 
-Expression *TermLiteral(LiteralVal *val) {
-   Expression *new_expr = (Expression *)calloc(1, sizeof(Expression));
+Expression_t *TermLiteral(Literal_t *val) {
+   Expression_t *new_expr = (Expression_t *)calloc(1, sizeof(Expression_t));
    new_expr->t = EXPR_TERM;
    new_expr->expr.term.t = TERM_LITERAL;
    new_expr->expr.term.val = val;
    return new_expr;
 }
 
-Expression *TermNull(void) {
-   Expression *new_expr = (Expression *)calloc(1, sizeof(Expression));
+Expression_t *TermNull(void) {
+   Expression_t *new_expr = (Expression_t *)calloc(1, sizeof(Expression_t));
    new_expr->t = EXPR_TERM;
    new_expr->expr.term.t = TERM_NULL;
    return new_expr;
 }
 
-Expression *TermColumnReference(ColumnReference *ref) {
-   Expression *new_expr = (Expression *)calloc(1, sizeof(Expression));
+Expression_t *TermColumnReference(ColumnReference_t *ref) {
+   Expression_t *new_expr = (Expression_t *)calloc(1, sizeof(Expression_t));
    new_expr->t = EXPR_TERM;
    new_expr->expr.term.t = TERM_COLREF;
    new_expr->expr.term.ref = ref;
    return new_expr;
 }
 
-Expression *TermFunction(int functype, Expression *expr) {
-   Expression *new_expr = (Expression *)calloc(1, sizeof(Expression));
+Expression_t *TermFunction(int functype, Expression_t *expr) {
+   Expression_t *new_expr = (Expression_t *)calloc(1, sizeof(Expression_t));
    new_expr->t = EXPR_TERM;
    new_expr->expr.term.t = TERM_FUNC;
    new_expr->expr.term.f.t = functype;
@@ -48,7 +48,7 @@ static void printTerm(ExprTerm term) {
          printf("%s", term.id);
          break;
       case TERM_LITERAL:
-         printLiteralVal(term.val);
+         Literal_print(term.val);
          break;
       case TERM_NULL:
          printf("NULL");
@@ -62,27 +62,27 @@ static void printTerm(ExprTerm term) {
          switch (term.f.t) {
             case FUNC_AVG:
                printf("AVG(");
-               printExpression(term.f.expr);
+               Expression_print(term.f.expr);
                printf(")");
                break;
             case FUNC_COUNT:
                printf("COUNT(");
-               printExpression(term.f.expr);
+               Expression_print(term.f.expr);
                printf(")");
                break;
             case FUNC_MAX:
                printf("MAX(");
-               printExpression(term.f.expr);
+               Expression_print(term.f.expr);
                printf(")");
                break;
             case FUNC_MIN:
                printf("MIN(");
-               printExpression(term.f.expr);
+               Expression_print(term.f.expr);
                printf(")");
                break;
             case FUNC_SUM:
                printf("SUM(");
-               printExpression(term.f.expr);
+               Expression_print(term.f.expr);
                printf(")");
                break;
             default:
@@ -99,7 +99,7 @@ static void deleteTerm(ExprTerm term) {
          free(term.id);
          break;
       case TERM_LITERAL:
-         deleteLiteralVal(term.val);
+         Literal_delete(term.val);
          break;
       case TERM_NULL:
          break;
@@ -133,72 +133,72 @@ static void deleteTerm(ExprTerm term) {
    }
 }
 
-Expression *Binary(Expression *expr1, Expression *expr2, enum ExprType t) {
-   Expression *expr = (Expression *)calloc(1, sizeof(Expression));
+Expression_t *Binary(Expression_t *expr1, Expression_t *expr2, enum ExprType t) {
+   Expression_t *expr = (Expression_t *)calloc(1, sizeof(Expression_t));
    expr->t = t;
    expr->expr.binary.expr1 = expr1;
    expr->expr.binary.expr2 = expr2;
    return expr;
 }
 
-Expression *Plus(Expression *expr1, Expression *expr2) {
+Expression_t *Plus(Expression_t *expr1, Expression_t *expr2) {
    return Binary(expr1, expr2, EXPR_PLUS);
 }
 
-Expression *Minus(Expression *expr1, Expression *expr2) {
+Expression_t *Minus(Expression_t *expr1, Expression_t *expr2) {
    return Binary(expr1, expr2, EXPR_MINUS);
 }
 
-Expression *Multiply(Expression *expr1, Expression *expr2) {
+Expression_t *Multiply(Expression_t *expr1, Expression_t *expr2) {
    return Binary(expr1, expr2, EXPR_MULTIPLY);
 }
 
-Expression *Divide(Expression *expr1, Expression *expr2) {
+Expression_t *Divide(Expression_t *expr1, Expression_t *expr2) {
    return Binary(expr1, expr2, EXPR_DIVIDE);
 }
 
-Expression *Concat(Expression *expr1, Expression *expr2) {
+Expression_t *Concat(Expression_t *expr1, Expression_t *expr2) {
    return Binary(expr1, expr2, EXPR_CONCAT);
 }
 
-Expression *Neg(Expression *expr) {
-   Expression *new_expr = (Expression *)calloc(1, sizeof(Expression));
+Expression_t *Neg(Expression_t *expr) {
+   Expression_t *new_expr = (Expression_t *)calloc(1, sizeof(Expression_t));
    new_expr->t = EXPR_NEG;
    new_expr->expr.unary.expr = expr;
    return new_expr;
 }
 
-void printExpression(Expression *expr) {
+void Expression_print(Expression_t *expr) {
    if (expr->t != EXPR_TERM) printf("(");
    switch (expr->t) {
       case EXPR_CONCAT:
-         printExpression(expr->expr.binary.expr1);
+         Expression_print(expr->expr.binary.expr1);
          printf(" || ");
-         printExpression(expr->expr.binary.expr2);
+         Expression_print(expr->expr.binary.expr2);
          break;
       case EXPR_PLUS:
-         printExpression(expr->expr.binary.expr1);
+         Expression_print(expr->expr.binary.expr1);
          printf(" + ");
-         printExpression(expr->expr.binary.expr2);
+         Expression_print(expr->expr.binary.expr2);
          break;
       case EXPR_MINUS:
-         printExpression(expr->expr.binary.expr1);
+         Expression_print(expr->expr.binary.expr1);
          printf(" - ");
-         printExpression(expr->expr.binary.expr2);
+         Expression_print(expr->expr.binary.expr2);
          break;
       case EXPR_MULTIPLY:
-         printExpression(expr->expr.binary.expr1);
+         Expression_print(expr->expr.binary.expr1);
          printf(" * ");
-         printExpression(expr->expr.binary.expr2);
+         Expression_print(expr->expr.binary.expr2);
          break;
       case EXPR_DIVIDE:
-         printExpression(expr->expr.binary.expr1);
+         Expression_print(expr->expr.binary.expr1);
          printf(" / ");
-         printExpression(expr->expr.binary.expr2);
+         Expression_print(expr->expr.binary.expr2);
          break;
       case EXPR_NEG:
          printf("-");
-         printExpression(expr->expr.unary.expr);
+         Expression_print(expr->expr.unary.expr);
          break;
       case EXPR_TERM:
          printTerm(expr->expr.term);
@@ -210,33 +210,33 @@ void printExpression(Expression *expr) {
    if (expr->alias) printf(" as %s", expr->alias);
 }
 
-static Expression *app_exp(Expression *e1, Expression *e2) {
+static Expression_t *app_exp(Expression_t *e1, Expression_t *e2) {
    e1->next = e2;
    return e1;
 }
 
-Expression *append_expression(Expression *e1, Expression *e2) {
+Expression_t *append_expression(Expression_t *e1, Expression_t *e2) {
    if (!e1) return e2;
    return app_exp(e1, append_expression(e1->next, e2));
 }
 
-void printExpressionList (Expression *expr) {
+void Expression_printList (Expression_t *expr) {
    int first = 1;
    printf("[");
    while (expr) {
       if (first) first = 0; else printf(", ");
-      printExpression(expr);
+      Expression_print(expr);
       expr = expr->next;
    }
    printf("]");
 }
 
-Expression *add_alias(Expression *expr, const char *alias) {
+Expression_t *add_alias(Expression_t *expr, const char *alias) {
    if (alias) expr->alias = strdup(alias);
    return expr;
 }
 
-static void deleteExpression(Expression *expr) {
+static void deleteExpression(Expression_t *expr) {
    switch (expr->t) {
       case EXPR_CONCAT:
          deleteExpression(expr->expr.binary.expr1);
@@ -271,7 +271,7 @@ static void deleteExpression(Expression *expr) {
    free(expr);
 }
 
-void deleteExpressionList(Expression *expr) {
+void deleteExpressionList(Expression_t *expr) {
 
 }
 
@@ -279,15 +279,15 @@ void deleteExpressionList(Expression *expr) {
 #ifdef EXPRESSION_TEST
 int main(int argc, char const *argv[])
 {
-   Expression *a = Term("a"),
+   Expression_t *a = Term("a"),
               *b = Term("b"),
               *c = TermLiteral(litInt(5)),
               *plus = Plus(a,b),
               *mult = Multiply(plus, c);
-   printExpression(mult);
+   Expression_print(mult);
    append_expression(mult, plus);
    puts("");
-   printExpressionList(mult);
+   Expression_printList(mult);
    puts("");
    return 0;
 }

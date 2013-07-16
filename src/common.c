@@ -18,8 +18,8 @@ char *typeToString(enum data_type type, char *buf) {
    return buf;
 }
 
-StrList *strlist(const char *str, StrList *next) {
-   StrList *list = (StrList *)calloc(1, sizeof(StrList));
+StrList_t *strlist(const char *str, StrList_t *next) {
+   StrList_t *list = (StrList_t *)calloc(1, sizeof(StrList_t));
    list->str = strdup(str);
    list->next = next;
    return list;

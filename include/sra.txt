@@ -16,18 +16,18 @@ RA - relational algebra
 
 Haskell:
 data RA = Table String
-        | Select Expression RA
+        | Select Expression_t RA
         | Project [String] RA
         | Union RA RA
         | Difference RA RA
         | Cross RA RA
         | Rename String [String] RA
 
-data Expression = Eq String String
+data Expression_t = Eq String String
                 | Lt String String
                 | Gt String String
-                | And Expression Expression
-                | Or Expression Expression
+                | And Expression_t Expression
+                | Or Expression_t Expression
                 | Not Expression
 
 C:
@@ -36,7 +36,7 @@ typedef struct RATable {
 } RATable;
 
 typedef struct RASelect {
-   Condition *expr;
+   Condition_t *expr;
    RA *ra;
 } RASelect;
 

@@ -26,16 +26,16 @@ int num_stmts = 0;
 	double dval;
 	int ival;
 	char *strval;
-	LiteralVal *lval;
-	Constraint *constr;
-	ForeignKeyReference fkeyref;
-	ChiColumn *col;
-	KeyDec *kdec;
-	StrList *slist;
-	ChiInsert *ins;
-	Condition *cond;
-	Expression *expr;
-	ColumnReference *colref;
+	Literal_t *lval;
+	Constraint_t *constr;
+	ForeignKeyRef_t fkeyref;
+	Column_t *col;
+	KeyDec_t *kdec;
+	StrList_t *slist;
+	Insert_t *ins;
+	Condition_t *cond;
+	Expression_t *expr;
+	ColumnReference_t *colref;
 	ChiDelete *del;
 }
 
@@ -56,7 +56,7 @@ int num_stmts = 0;
 %type <strval> column_name table_name opt_alias column_name_or_star
 %type <slist> column_names_list opt_column_names
 %type <constr> opt_constraints constraints constraint
-%type <lval> literal_value values_list
+%type <lval> literal_value values_list in_statement
 %type <fkeyref> references_stmt
 %type <col> column_dec column_dec_list
 %type <kdec> key_dec opt_key_dec_list key_dec_list
@@ -90,7 +90,7 @@ sql_line
 create_table
 	: CREATE TABLE table_name '(' column_dec_list opt_key_dec_list ')' 
 		{
-			ChiTable *table = CreateTable($3, $5, $6);
+			Table_t *table = Table_make($3, $5, $6);
 			add_table(table);
 		}
 	;
@@ -99,7 +99,7 @@ column_dec_list
 	: column_dec { $$ = $1; }
 	| column_dec_list ',' column_dec 
 		{ 
-			$$ = append_column($1, $3); 
+			$$ = Column_append($1, $3); 
 		}
 	;
 
@@ -124,7 +124,7 @@ column_type
 				fprintf(stderr, "Error: sizes must be greater than 0 (line %d).\n", yylineno);
 				exit(1);
 			}
-			set_size($3);
+			Column_setSize($3);
 			fprintf(stderr, "****WARNING: sized types (line %d) "
 					 "not yet supported in chiDB.\n", yylineno); 
 		}
@@ -137,18 +137,18 @@ opt_key_dec_list
 
 key_dec_list
 	: key_dec { $$ = $1; }
-	| key_dec_list ',' key_dec { $$ = append_key_dec($1, $3); }
+	| key_dec_list ',' key_dec { $$ = KeyDec_append($1, $3); }
 	;
 
 key_dec
 	: PRIMARY KEY '(' column_names_list ')' 
 		{ $$ = PrimaryKeyDec($4); }
 	| FOREIGN KEY '(' column_name ')' references_stmt 
-		{$$ = ForeignKeyDec(makeFullFKeyReference($4, $6)); }
+		{$$ = ForeignKeyDec(ForeignKeyRef_makeFull($4, $6)); }
 
 references_stmt
-	: REFERENCES table_name { $$ = makeFKeyReference($2, NULL); }
-	| REFERENCES table_name '(' column_name ')' { $$ = makeFKeyReference($2, $4); }
+	: REFERENCES table_name { $$ = ForeignKeyRef_make($2, NULL); }
+	| REFERENCES table_name '(' column_name ')' { $$ = ForeignKeyRef_make($2, $4); }
 	;
 
 opt_constraints
@@ -157,15 +157,15 @@ opt_constraints
 	;
 
 constraints
-	: constraint { $$ = append_constraint(NULL, $1); 
+	: constraint { $$ = Constraint_append(NULL, $1); 
 						/*printf("new constraint:");
-						printConstraint($1);
+						Constraint_print($1);
 						printf("created a vector of constraints\n");
-						printConstraints($$);*/
+						Constraint_printList($$);*/
 					 }
-	| constraint constraints { $$ = append_constraint($2, $1); 
+	| constraint constraints { $$ = Constraint_append($2, $1); 
 										/*printf("appended a constraint\n");
-										printConstraints($$);*/
+										Constraint_printList($$);*/
 									}
 	;
 
@@ -193,7 +193,7 @@ select_statement
 	: SELECT opt_distinct expression_list FROM table opt_select_constraints
 		{
 			/* printf("List of expressions to select: ");
-			printExpressionList($3);
+			Expression_printList($3);
 			puts(""); */
 		}
 	| '(' select_statement ')'
@@ -231,11 +231,11 @@ orderby
 	;
 
 condition
-   : bool_term { $$ = $1; /*printf("Found condition: \n"); printCondition($$); puts(""); */}
+   : bool_term { $$ = $1; /*printf("Found condition: \n"); Condition_print($$); puts(""); */}
    | bool_term bool_op condition 
    	{ 
    		$$ = ($2 == AND) ? And($1, $3) : Or($1, $3); 
-   		/* printf("Found condition: \n"); printCondition($$); puts(""); */
+   		/* printf("Found condition: \n"); Condition_print($$); puts(""); */
    	}
    ;
 
@@ -249,16 +249,13 @@ bool_term
    			  ($2 == LEQ) ? Geq($1, $3) :
    			  Not(Eq($1, $3));
    	}
-   | expression in_statement { $$ = NULL; }
+   | expression in_statement { $$ = In($1, $2); }
    | '(' condition ')' 	{ $$ = $2; }
    | NOT bool_term 		{ $$ = Not($2); }
    ;
 
 in_statement
-	:  IN '(' values_list ')' 
-		{ 
-			fprintf(stderr, "****WARNING: IN statement not yet supported\n");
-		}
+	:  IN '(' values_list ')' { $$ = $3; }
 	|	IN '(' select ')'
    	{
    		fprintf(stderr, "****WARNING: IN SELECT statement not yet supported\n");
@@ -311,9 +308,9 @@ term
 	;
 
 column_reference
-	: column_name_or_star { $$ = makeColumnReference(NULL, $1); }
+	: column_name_or_star { $$ = ColumnReference_make(NULL, $1); }
 	| table_name '.' column_name_or_star
-		 { $$ = makeColumnReference($1, $3); }
+		 { $$ = ColumnReference_make($1, $3); }
 	;
 
 opt_alias
@@ -378,8 +375,8 @@ opt_outer
 insert_into
 	: INSERT INTO table_name opt_column_names VALUES '(' values_list ')'
 		{
-			$$ = InsertInto(Table($3), $4, $7);
-			printInsert($$);
+			$$ = Insert_make(Table($3), $4, $7);
+			Insert_print($$);
 		}
 	;
 
@@ -397,7 +394,7 @@ values_list
 	: literal_value { $$ = $1; }
 	| values_list ',' literal_value 
 		{ 
-			$$ = appendLiteralVal($3, $1); 
+			$$ = Literal_append($3, $1); 
 
 		}
 	;

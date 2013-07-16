@@ -6,17 +6,17 @@
 #include "column.h"
 /*
 
-data Expression = Term String
-                | Plus Expression Expression
-                | Minus Expression Expression
-                | Multiply Expression Expression
-                | Divide Expression Expression
-                | Concat Expression Expression
+data Expression_t = Term String
+                | Plus Expression_t Expression
+                | Minus Expression_t Expression
+                | Multiply Expression_t Expression
+                | Divide Expression_t Expression
+                | Concat Expression_t Expression
                 | Neg Expression
 
 */
 
-typedef struct Expression Expression;
+typedef struct Expression_t Expression_t;
 
 enum TermType {
    TERM_LITERAL,
@@ -36,25 +36,25 @@ enum FuncType {
 
 typedef struct Func {
   enum FuncType t;
-  Expression *expr;
+  Expression_t *expr;
 } Func;
 
 typedef struct ExprTerm {
    enum TermType t;
    union {
       char *id;
-      LiteralVal *val;
-      ColumnReference *ref;
+      Literal_t *val;
+      ColumnReference_t *ref;
       Func f;
    };
 } ExprTerm;
 
 typedef struct ExprBinary {
-   Expression *expr1, *expr2;
+   Expression_t *expr1, *expr2;
 } ExprBinary;
 
 typedef struct ExprUnary {
-   Expression *expr;
+   Expression_t *expr;
 } ExprUnary;
 
 enum ExprType {
@@ -67,7 +67,7 @@ enum ExprType {
    EXPR_NEG,
 };
 
-struct Expression {
+struct Expression_t {
    enum ExprType t;
    union {
       ExprTerm term;
@@ -75,29 +75,29 @@ struct Expression {
       ExprUnary unary;
    } expr;
    char *alias;
-   Expression *next;
+   Expression_t *next;
 };
 
 
-Expression *Term(const char *str);
-Expression *TermLiteral(LiteralVal *val);
-Expression *TermNull(void);
-Expression *TermColumnReference(ColumnReference *ref);
-Expression *TermFunction(int type, Expression *expr);
+Expression_t *Term(const char *str);
+Expression_t *TermLiteral(Literal_t *val);
+Expression_t *TermNull(void);
+Expression_t *TermColumnReference(ColumnReference_t *ref);
+Expression_t *TermFunction(int type, Expression_t *expr);
 
 
-Expression *Plus(Expression *, Expression *);
-Expression *Minus(Expression *, Expression *);
-Expression *Multiply(Expression *, Expression *);
-Expression *Divide(Expression *, Expression *);
-Expression *Concat(Expression *, Expression *);
-Expression *Neg(Expression *);
+Expression_t *Plus(Expression_t *, Expression_t *);
+Expression_t *Minus(Expression_t *, Expression_t *);
+Expression_t *Multiply(Expression_t *, Expression_t *);
+Expression_t *Divide(Expression_t *, Expression_t *);
+Expression_t *Concat(Expression_t *, Expression_t *);
+Expression_t *Neg(Expression_t *);
 
-Expression *append_expression(Expression *expr_list, Expression *expr);
-Expression *add_alias(Expression *expr, const char *alias);
-void printExpression(Expression *);
-void printExpressionList(Expression *);
+Expression_t *append_expression(Expression_t *expr_list, Expression_t *expr);
+Expression_t *add_alias(Expression_t *expr, const char *alias);
+void Expression_print(Expression_t *);
+void Expression_printList(Expression_t *);
 
-void deleteExpressionList(Expression *);
+void deleteExpressionList(Expression_t *);
 
 #endif

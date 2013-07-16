@@ -4,13 +4,13 @@
 #include "common.h"
 #include "create.h"
 
-typedef struct ChiInsert {
+typedef struct Insert_t {
    RA *ra;
-   StrList *col_names;
-   LiteralVal *values;
-} ChiInsert;
+   StrList_t *col_names;
+   Literal_t *values;
+} Insert_t;
 
-ChiInsert *InsertInto(RA *ra, StrList *opt_col_names, LiteralVal *values);
-void printInsert(ChiInsert *insert);
+Insert_t *Insert_make(RA *ra, StrList_t *opt_col_names, Literal_t *values);
+void Insert_print(Insert_t *insert);
 
 #endif

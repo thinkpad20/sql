@@ -3,86 +3,86 @@
 
 static ssize_t size_constraint = -1;
 
-Constraint *NotNull(void) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
+Constraint_t *NotNull(void) {
+   Constraint_t *con = (Constraint_t *)calloc(1, sizeof(Constraint_t));
    con->t = CONS_NOT_NULL;
    return con;
 }
 
-Constraint *AutoIncrement(void) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
+Constraint_t *AutoIncrement(void) {
+   Constraint_t *con = (Constraint_t *)calloc(1, sizeof(Constraint_t));
    con->t = CONS_AUTO_INCREMENT;
    return con;
 }
 
-Constraint *PrimaryKey(void) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
+Constraint_t *PrimaryKey(void) {
+   Constraint_t *con = (Constraint_t *)calloc(1, sizeof(Constraint_t));
    con->t = CONS_PRIMARY_KEY;
    return con;
 }
 
-Constraint *ForeignKey(ForeignKeyReference fkr) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
+Constraint_t *ForeignKey(ForeignKeyRef_t fkr) {
+   Constraint_t *con = (Constraint_t *)calloc(1, sizeof(Constraint_t));
    con->t = CONS_FOREIGN_KEY;
    con->constraint.ref = fkr;
    return con;
 }
 
-Constraint *Default(LiteralVal *val) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
+Constraint_t *Default(Literal_t *val) {
+   Constraint_t *con = (Constraint_t *)calloc(1, sizeof(Constraint_t));
    con->t = CONS_DEFAULT;
    con->constraint.default_val = val;
    return con;
 }
 
-Constraint *Unique(void) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
+Constraint_t *Unique(void) {
+   Constraint_t *con = (Constraint_t *)calloc(1, sizeof(Constraint_t));
    con->t = CONS_UNIQUE;
    return con;
 }
 
-Constraint *Check(Condition *cond) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
+Constraint_t *Check(Condition_t *cond) {
+   Constraint_t *con = (Constraint_t *)calloc(1, sizeof(Constraint_t));
    con->t = CONS_CHECK;
    con->constraint.check = cond;
    return con;
 }
 
-Constraint *ColumnSize(unsigned size) {
-   Constraint *con = (Constraint *)calloc(1, sizeof(Constraint));
+Constraint_t *ColumnSize(unsigned size) {
+   Constraint_t *con = (Constraint_t *)calloc(1, sizeof(Constraint_t));
    con->t = CONS_SIZE;
    con->constraint.size = size;
    return con;
 }
 
-static void deleteConstraints(Constraint *constraint) {
+static void deleteConstraint_ts(Constraint_t *constraint) {
    if (constraint) {
-      Constraint *next = constraint->next;
+      Constraint_t *next = constraint->next;
       switch (constraint->t) {
          case CONS_DEFAULT:
-            deleteLiteralVal(constraint->constraint.default_val);
+            Literal_delete(constraint->constraint.default_val);
             break;
          case CONS_CHECK:
-            deleteCondition(constraint->constraint.check);
+            Condition_delete(constraint->constraint.check);
             break;
          default:
             break;
       }
-      deleteConstraints(next);
+      deleteConstraint_ts(next);
    }
 }
 
-void deleteColumns(ChiColumn *column) {
+void Column_deleteList(Column_t *column) {
    if (column) {
-      ChiColumn *next = column->next;
+      Column_t *next = column->next;
       free(column->name);
-      deleteConstraints(column->constraints);
+      deleteConstraint_ts(column->constraints);
       free(column);
-      deleteColumns(next);
+      Column_deleteList(next);
    }
 }
 
-void printConstraints(Constraint *constraints) {
+void Constraint_printList(Constraint_t *constraints) {
    int first = 1;
    if (constraints) {
       printf(" [");
@@ -92,45 +92,45 @@ void printConstraints(Constraint *constraints) {
          } else {
             printf(", ");
          }
-         printConstraint(constraints);
+         Constraint_print(constraints);
       }
       printf("]");
    }
 }
 
-ForeignKeyReference makeFullFKeyReference(const char *cname, ForeignKeyReference fkey) {
+ForeignKeyRef_t ForeignKeyRef_makeFull(const char *cname, ForeignKeyRef_t fkey) {
    fkey.col_name = cname;
    return fkey;
 }
 
-ForeignKeyReference makeFKeyReference(const char *foreign_tname,
+ForeignKeyRef_t ForeignKeyRef_make(const char *foreign_tname,
                                       const char *foreign_cname) {
-   ForeignKeyReference fkey;
+   ForeignKeyRef_t fkey;
    fkey.col_name = NULL;
    fkey.table_name = foreign_tname;
    fkey.table_col_name = foreign_cname;
    return fkey;
 }
 
-ChiColumn *Column(const char *name, enum data_type type, Constraint *constraints) {
-   ChiColumn *new_column = (ChiColumn *)calloc(1, sizeof(ChiColumn));
+Column_t *Column(const char *name, enum data_type type, Constraint_t *constraints) {
+   Column_t *new_column = (Column_t *)calloc(1, sizeof(Column_t));
    new_column->name = strdup(name);
    new_column->type = type;
    new_column->constraints = constraints;
    /* if the parser found a size constraint, then size_constraitn will be > 0 */
    if (size_constraint > 0) {
-      append_constraint(new_column->constraints, ColumnSize(size_constraint));
+      Constraint_append(new_column->constraints, ColumnSize(size_constraint));
       size_constraint = -1;
    }
    return new_column;
 }
 
-ChiColumn *add_constraints(ChiColumn *column, Constraint *constraints) {
-   column->constraints = append_constraint(column->constraints, constraints);
+Column_t *Column_addConstraint(Column_t *column, Constraint_t *constraints) {
+   column->constraints = Constraint_append(column->constraints, constraints);
    return column;
 }
 
-Constraint *append_constraint(Constraint *constraints, Constraint *constraint) {
+Constraint_t *Constraint_append(Constraint_t *constraints, Constraint_t *constraint) {
    if (constraints == NULL)
       constraints = constraint;
    else
@@ -138,12 +138,12 @@ Constraint *append_constraint(Constraint *constraints, Constraint *constraint) {
    return constraints;
 }
 
-void printConstraint(void *constraint_voidp) {
-   Constraint *constraint = (Constraint *)constraint_voidp;
+void Constraint_print(void *constraint_voidp) {
+   Constraint_t *constraint = (Constraint_t *)constraint_voidp;
    switch(constraint->t) {
       case CONS_DEFAULT:
          printf("Default: ");
-         printLiteralVal(constraint->constraint.default_val);
+         Literal_print(constraint->constraint.default_val);
          break;
       case CONS_PRIMARY_KEY:
          printf("Primary Key");
@@ -163,7 +163,7 @@ void printConstraint(void *constraint_voidp) {
          break;
       case CONS_CHECK:
          printf("Check: ");
-         printCondition(constraint->constraint.check);
+         Condition_print(constraint->constraint.check);
          break;
       case CONS_SIZE:
          printf("Size: %u", constraint->constraint.size);
@@ -173,22 +173,22 @@ void printConstraint(void *constraint_voidp) {
    }
 }
 
-void set_size(ssize_t size) {
+void Column_setSize(ssize_t size) {
    size_constraint = size;
 }
 
-static ChiColumn *app_col(ChiColumn *col1, ChiColumn *col2) {
+static Column_t *app_col(Column_t *col1, Column_t *col2) {
    col1->next = col2;
    return col1;
 }
 
-ChiColumn *append_column(ChiColumn *col1, ChiColumn *col2) {
+Column_t *Column_append(Column_t *col1, Column_t *col2) {
    if (!col1) return col2;
-   return app_col(col1, append_column(col1->next, col2));
+   return app_col(col1, Column_append(col1->next, col2));
 }
 
-ColumnReference *makeColumnReference(const char *tname, const char *cname) {
-   ColumnReference *ref = (ColumnReference *)calloc(1, sizeof(ColumnReference));
+ColumnReference_t *ColumnReference_make(const char *tname, const char *cname) {
+   ColumnReference_t *ref = (ColumnReference_t *)calloc(1, sizeof(ColumnReference_t));
    if (tname) ref->tableName = strdup(tname);
    if (cname) ref->columnName = strdup(cname);
    return ref;

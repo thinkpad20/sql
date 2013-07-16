@@ -1,8 +1,8 @@
 #include "../include/insert.h"
 #include "../include/ra.h"
 
-ChiInsert *InsertInto(RA *ra, StrList *opt_col_names, LiteralVal *values) {
-   ChiInsert *new_insert = (ChiInsert *)calloc(1, sizeof(ChiInsert));
+Insert_t *Insert_make(RA *ra, StrList_t *opt_col_names, Literal_t *values) {
+   Insert_t *new_insert = (Insert_t *)calloc(1, sizeof(Insert_t));
    new_insert->ra = ra;
    new_insert->col_names = opt_col_names;
    new_insert->values = values;
@@ -30,8 +30,8 @@ ChiInsert *InsertInto(RA *ra, StrList *opt_col_names, LiteralVal *values) {
    return new_insert;
 }
 
-void printInsert(ChiInsert *insert) {
-   LiteralVal *val = insert->values;
+void Insert_print(Insert_t *insert) {
+   Literal_t *val = insert->values;
    int first = 1;
    printf("Insert ");
    printf("[");
@@ -41,13 +41,13 @@ void printInsert(ChiInsert *insert) {
       } else {
          printf(", ");
       }
-      printLiteralVal(val);
+      Literal_print(val);
       val = val->next;
    }
    printf("] into ");
    printRA(insert->ra);
    if (insert->col_names) {
-      StrList *list = insert->col_names;
+      StrList_t *list = insert->col_names;
       first = 1;
       printf(" using columns [");
       while (list) {

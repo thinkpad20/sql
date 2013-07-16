@@ -10,22 +10,22 @@ union LitVal {
    char *strval;
 };
 
-typedef struct LiteralVal {
+typedef struct Literal_t {
    enum data_type t;
    union LitVal val;
-   struct LiteralVal *next; /* linked list */
-} LiteralVal;
+   struct Literal_t *next; /* linked list */
+} Literal_t;
 
-LiteralVal makeLiteralVal(enum data_type type, union LitVal val);
+Literal_t *litInt(int i);
+Literal_t *litDouble(double d);
+Literal_t *litChar(char c);
+Literal_t *litText(char *str);
+Literal_t *Literal_append(Literal_t *val, Literal_t *toAppend);
 
-LiteralVal *litInt(int i);
-LiteralVal *litDouble(double d);
-LiteralVal *litChar(char c);
-LiteralVal *litText(char *str);
-LiteralVal *appendLiteralVal(LiteralVal *val, LiteralVal *toAppend);
+void Literal_delete(Literal_t *lval);
+void Literal_deleteList(Literal_t *lval);
 
-void deleteLiteralVal(LiteralVal *lval);
-
-void printLiteralVal(LiteralVal *val);
+void Literal_print(Literal_t *val);
+void Literal_printList(Literal_t *val);
 
 #endif

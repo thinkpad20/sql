@@ -12,7 +12,7 @@ void printRA(RA *ra) {
          break;
       case RA_SIGMA:
          indent_print("Sigma(");
-         printCondition(ra->ra.sigma.cond);
+         Condition_print(ra->ra.sigma.cond);
          printf(", ");
          upInd();
          printRA(ra->ra.sigma.ra);
@@ -21,7 +21,7 @@ void printRA(RA *ra) {
          break;
       case RA_PI:
          indent_print("Pi(");
-         printExpressionList(ra->ra.pi.expr_list);
+         Expression_printList(ra->ra.pi.expr_list);
          printf(", ");
          upInd();
          printRA(ra->ra.pi.ra);
@@ -81,7 +81,7 @@ RA *Table (const char *name) {
    return new_ra;
 }
 
-RA *Sigma (RA *ra, Condition *cond) {
+RA *Sigma (RA *ra, Condition_t *cond) {
    RA *new_ra = (RA *)calloc(1, sizeof(RA));
    new_ra->t = RA_SIGMA;
    new_ra->ra.sigma.cond = cond;
@@ -89,7 +89,7 @@ RA *Sigma (RA *ra, Condition *cond) {
    return new_ra;
 }
 
-RA *Pi (RA *ra, Expression *expr_list) {
+RA *Pi (RA *ra, Expression_t *expr_list) {
    RA *new_ra = (RA *)calloc(1, sizeof(RA));
    new_ra->t = RA_PI;
    new_ra->ra.pi.ra = ra;
@@ -142,7 +142,7 @@ void deleteRA(RA *ra) {
    int i;
    switch(ra->t) {
       case RA_SIGMA:
-         deleteCondition(ra->ra.sigma.cond);
+         Condition_delete(ra->ra.sigma.cond);
          deleteRA(ra->ra.sigma.ra);
          break;
       case RA_PI:

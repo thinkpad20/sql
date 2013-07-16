@@ -7,7 +7,7 @@
 /*
 RA in Haskell
 data RA = Table String
-        | Select Expression RA -- see below for Expression def
+        | Select Expression_t RA -- see below for Expression_t def
         | Project [String] RA
         | Union RA RA
         | Difference RA RA
@@ -20,12 +20,12 @@ typedef struct RA_Table {
 } RA_Table;
 
 typedef struct RA_Sigma {
-   Condition *cond;
+   Condition_t *cond;
    RA *ra;
 } RA_Sigma;
 
 typedef struct RA_Pi {
-   Expression *expr_list;
+   Expression_t *expr_list;
    RA *ra;
 } RA_Pi;
 
@@ -64,8 +64,8 @@ struct RA {
 void printRA(RA *ra);
 
 RA *Table(const char *name);
-RA *Sigma(RA *ra, Condition *expr);
-RA *Pi(RA *ra, Expression *expr_list);
+RA *Sigma(RA *ra, Condition_t *expr);
+RA *Pi(RA *ra, Expression_t *expr_list);
 RA *Union(RA *ra1, RA *ra2);
 RA *Difference(RA *ra1, RA *ra2);
 RA *Cross(RA *ra1, RA *ra2);

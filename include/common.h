@@ -10,7 +10,7 @@
 
 /* Forward declarations */
 typedef struct RA RA;
-typedef struct Condition Condition;
+typedef struct Condition_t Condition_t;
 
 enum data_type {
    TYPE_INT,
@@ -19,12 +19,12 @@ enum data_type {
    TYPE_TEXT
 };
 
-typedef struct StrList {
+typedef struct StrList_t {
    char *str;
-   struct StrList *next;
-} StrList;
+   struct StrList_t *next;
+} StrList_t;
 
 char *typeToString(enum data_type type, char *buf);
-StrList *strlist(const char *str, StrList *next);
+StrList_t *strlist(const char *str, StrList_t *next);
 
 #endif
