@@ -249,13 +249,20 @@ bool_term
    			  ($2 == LEQ) ? Geq($1, $3) :
    			  Not(Eq($1, $3));
    	}
-   | expression IN '(' select ')'
-   	{
-   		fprintf(stderr, "****WARNING: IN SELECT statement not yet supported\n");
-   		$$ = NULL;
-   	}
+   | expression in_statement { $$ = NULL; }
    | '(' condition ')' 	{ $$ = $2; }
    | NOT bool_term 		{ $$ = Not($2); }
+   ;
+
+in_statement
+	:  IN '(' values_list ')' 
+		{ 
+			fprintf(stderr, "****WARNING: IN statement not yet supported\n");
+		}
+	|	IN '(' select ')'
+   	{
+   		fprintf(stderr, "****WARNING: IN SELECT statement not yet supported\n");
+   	}
    ;
 
 bool_op
