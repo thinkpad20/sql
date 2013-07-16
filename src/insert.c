@@ -45,7 +45,7 @@ void Insert_print(Insert_t *insert) {
       val = val->next;
    }
    printf("] into ");
-   printRA(insert->ra);
+   SRA_print(insert->ra);
    if (insert->col_names) {
       StrList_t *list = insert->col_names;
       first = 1;

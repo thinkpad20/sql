@@ -2,6 +2,9 @@
 #define __SRA_H_
 
 #include "common.h"
+#include "expression.h"
+#include "create.h"
+#include "condition.h"
 
 /*
 SQL:
@@ -26,43 +29,117 @@ Pi([Col1, Col2],
 */
 
 /*
-data SRA = Table TableName
-         | Pi [Alias] SRAAlias
-         | Sigma Condition_t SRA
+data SRA = Table TableReference
+         | Project SRA [Expression] 
+         | Select SRA Condition 
          | NaturalJoin [SRA]
          | Join [SRA] (Maybe JoinCondition)
          | OuterJoin [SRA] OJType (Maybe JoinCondition)
          | Union SRA SRA
-         | Difference SRA SRA
+         | Except SRA SRA
          | Intersect SRA SRA
 
 data OJType = Left 
             | Right 
             | Full
 
-data ColumnName = ColumnName (Maybe String) String
-data TableName = TableName String (Maybe String)
-data JoinCondition_t = On Condition
+data ColumnReference = ColumnReference (Maybe String) String
+data TableReference = TableName String (Maybe String)
+data JoinCondition = On Condition
                    | Using [String]
 
-data Expression_t = ColumnRef ColumnName
-                | LitInt Integer
-                | LitDouble Double
-                | LitChar Char
-                | LitText String
-                | Concat Expression_t Expression
-                | Add Expression_t Expression
-                | Subtract Expression_t Expression
-                | Multiply Expression_t Expression
-                | Divide Expression_t Expression
-
-data Alias = Alias Expression_t (Maybe String) -- for naming expressions
 */
 
-typedef struct SRA {
+typedef struct SRA_s SRA_t;
+typedef struct SRAList_s SRAList_t;
+typedef struct JoinCondition_s JoinCondition_t;
 
-} SRA;
+enum SRAType {
+   SRA_TABLE,
+   SRA_PROJECT,
+   SRA_SELECT,
+   SRA_NATURAL_JOIN,
+   SRA_JOIN,
+   SRA_OUTER_JOIN,
+   SRA_UNION,
+   SRA_EXCEPT,
+   SRA_INTERSECT,
+};
 
-RA *desugar(SRA *sra);
+enum OJType { OJ_LEFT, OJ_RIGHT, OJ_FULL };
+
+typedef struct SRA_Table_s {
+   TableReference_t *ref;
+} SRA_Table_t;
+
+typedef struct SRA_Project_s {
+   SRA_t *sra;
+   Expression_t *expr_list;
+} SRA_Project_t;
+
+typedef struct SRA_Select_s {
+   SRA_t *sra;
+   Condition_t *cond;
+} SRA_Select_t;
+
+typedef struct SRA_NaturalJoin_s {
+   SRAList_t *sras;
+} SRA_NaturalJoin_t;
+
+typedef struct SRA_Join_s {
+   SRAList_t *sras;
+   JoinCondition_t *opt_cond;
+} SRA_Join_t;
+
+typedef struct SRA_OuterJoin_s {
+   enum OJType t;
+   SRAList_t *sras;
+   JoinCondition_t *opt_cond;
+} SRA_OuterJoin_t;
+
+typedef struct SRA_Binary_s {
+   SRA_t *sra1, *sra2;
+} SRA_Binary_t;
+
+struct SRA_s {
+   enum SRAType t;
+   union {
+      SRA_Table_t table;
+      SRA_Project_t project;
+      SRA_Select_t select;
+      SRA_NaturalJoin_t natjoin;
+      SRA_Join_t join;
+      SRA_OuterJoin_t ojoin;
+      SRA_Binary_t binary;
+   };
+};
+
+struct SRAList_s {
+   SRA_t *sra;
+   struct SRAList_s *next;
+};
+
+struct JoinCondition_s {
+   Condition_t *on;
+   StrList_t *using_list;
+};
+
+SRA_t *SRATable(TableReference_t *ref);
+SRA_t *SRAProject(SRA_t *sra, Expression_t *expr);
+SRA_t *SRASelect(SRA_t *sra, Condition_t *cond);
+SRA_t *SRANaturalJoin(SRAList_t *sras);
+SRA_t *SRAJoin(SRAList_t *sras, JoinCondition_t *cond);
+SRA_t *SRAOuterJoin(enum OJType t, SRAList_t *sras, JoinCondition_t *cond);
+SRA_t *SRAUnion(SRA_t *sra1, SRA_t *sra2);
+SRA_t *SRAExcept(SRA_t *sra1, SRA_t *sra2);
+SRA_t *SRAIntersect(SRA_t *sra1, SRA_t *sra2);
+
+SRAList_t *SRAList_make(SRA_t *sra);
+SRAList_t *SRAList_append(SRAList_t *list, SRAList_t *next);
+
+void SRAList_print(SRAList_t *sras);
+void JoinCondition_print(JoinCondition_t *cond);
+
+RA *desugar(SRA_t *sra);
 
 #endif

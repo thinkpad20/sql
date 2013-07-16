@@ -120,3 +120,10 @@ KeyDec_t *KeyDec_append(KeyDec_t *decs, KeyDec_t *dec) {
    decs->next = dec;
    return decs;
 }
+
+TableReference_t *TableReference_make(char *table_name, char *alias) {
+   TableReference_t *ref = (TableReference_t *)calloc(1, sizeof(TableReference_t));
+   ref->table_name = table_name;
+   ref->alias = alias;
+   return ref;
+}

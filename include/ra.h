@@ -61,7 +61,7 @@ struct RA {
    } ra;
 };
 
-void printRA(RA *ra);
+void RA_print(RA *ra);
 
 RA *Table(const char *name);
 RA *Sigma(RA *ra, Condition_t *expr);

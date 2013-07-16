@@ -1,10 +1,6 @@
 #include "../include/ra.h"
 
-static void indent_print(const char *format,...);
-static void upInd();
-static void downInd();
-
-void printRA(RA *ra) {
+void RA_print(RA *ra) {
    int i;
    switch(ra->t) {
       case RA_TABLE:
@@ -15,7 +11,7 @@ void printRA(RA *ra) {
          Condition_print(ra->ra.sigma.cond);
          printf(", ");
          upInd();
-         printRA(ra->ra.sigma.ra);
+         RA_print(ra->ra.sigma.ra);
          downInd();
          indent_print(")");
          break;
@@ -24,34 +20,34 @@ void printRA(RA *ra) {
          Expression_printList(ra->ra.pi.expr_list);
          printf(", ");
          upInd();
-         printRA(ra->ra.pi.ra);
+         RA_print(ra->ra.pi.ra);
          downInd();
          indent_print(")");
          break;
       case RA_UNION:
          indent_print("Union(");
          upInd();
-         printRA(ra->ra.binary.ra1);
+         RA_print(ra->ra.binary.ra1);
          indent_print(", ");
-         printRA(ra->ra.binary.ra2);
+         RA_print(ra->ra.binary.ra2);
          downInd();
          indent_print(")");
          break;
       case RA_DIFFERENCE:
          indent_print("Difference(");
          upInd();
-         printRA(ra->ra.binary.ra1);
+         RA_print(ra->ra.binary.ra1);
          indent_print(", ");
-         printRA(ra->ra.binary.ra2);
+         RA_print(ra->ra.binary.ra2);
          downInd();
          indent_print(")");
          break;
       case RA_CROSS:
          indent_print("Cross(");
          upInd();
-         printRA(ra->ra.binary.ra1);
+         RA_print(ra->ra.binary.ra1);
          indent_print(", \n");
-         printRA(ra->ra.binary.ra2);
+         RA_print(ra->ra.binary.ra2);
          downInd();
          indent_print(")");
          break;
@@ -65,7 +61,7 @@ void printRA(RA *ra) {
          }
          printf("], ");
          upInd();
-         printRA(ra->ra.rho.ra);
+         RA_print(ra->ra.rho.ra);
          downInd();
          indent_print(")");
          break;
@@ -167,40 +163,6 @@ void deleteRA(RA *ra) {
    free(ra);
 }
 
-#define BUF_SIZE 5000
-static int ind = 0;
-
-static void upInd() {
-   ind++;
-   printf("\n");
-}
-
-static void downInd() {
-   ind--;
-   printf("\n");
-   if (ind < 0) printf("error, ind is < 0");
-}
-
-static void indent_print(const char *format,...)
-{
-   /* indent */
-   int i;
-   va_list argptr;
-   char buffer[BUF_SIZE];
-   if (ind < 1) ind = 0;
-   for (i=0; i<ind; ++i) {
-      if (i == 0)
-         sprintf(buffer, "\t");
-      else
-         strcat(buffer, "\t");
-   }
-   va_start(argptr, format);
-   vsnprintf(buffer + ind, BUF_SIZE, format, argptr);
-   va_end(argptr);
-   fputs(buffer, stdout);
-   fflush(stdout);
-}
-
 #ifdef RA_TEST
 
 int main(int argc, char const *argv[])
@@ -210,8 +172,8 @@ int main(int argc, char const *argv[])
       *ra2 = Pi(Rho(Sigma(Cross(Rho(Table("Foo"), "f", 1, "Col1"),
                         Rho(Table("Foo"), "g", 1, "Col2")),Not(Eq("Col1","Col2"))
                   ),"res", 2, "Col1", "Col2"),2, "Col1", "Col2");
-   printRA(ra1);
-   printRA(ra2);
+   RA_print(ra1);
+   RA_print(ra2);
    deleteRA(ra1);
    deleteRA(ra2);
    return 0;

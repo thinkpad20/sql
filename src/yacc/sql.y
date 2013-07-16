@@ -386,8 +386,8 @@ opt_column_names
 	;
 
 column_names_list
-	: column_name { $$ = strlist($1, NULL); }
-	| column_names_list ',' column_name { $$ = strlist($3, $1); }
+	: column_name { $$ = StrList_make($1); }
+	| column_names_list ',' column_name { $$ = StrList_append($1, $3); }
 	;
 
 values_list

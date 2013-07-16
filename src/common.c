@@ -24,3 +24,81 @@ StrList_t *strlist(const char *str, StrList_t *next) {
    list->next = next;
    return list;
 }
+
+void StrList_print(StrList_t *list) {
+   int first = 1;
+   printf("[");
+   while (list) {
+      if (first) first=0; else printf(", ");
+      printf("%s", list->str);
+      list = list->next;
+   }
+   printf("]");
+}
+
+int ind = 0;
+
+void upInd() {
+   ind++;
+   printf("\n");
+}
+
+void downInd() {
+   ind--;
+   printf("\n");
+   if (ind < 0) printf("error, ind is < 0");
+}
+
+#define BUF_SIZE 5000
+
+void indent_print(const char *format,...)
+{
+   /* indent */
+   int i;
+   va_list argptr;
+   char buffer[BUF_SIZE];
+   if (ind < 1) ind = 0;
+   for (i=0; i<ind; ++i) {
+      if (i == 0)
+         sprintf(buffer, "\t");
+      else
+         strcat(buffer, "\t");
+   }
+   va_start(argptr, format);
+   vsnprintf(buffer + ind, BUF_SIZE, format, argptr);
+   va_end(argptr);
+   fputs(buffer, stdout);
+   fflush(stdout);
+}
+
+static StrList_t *StrList_app(StrList_t *list1, StrList_t *list2) {
+   list1->next = list2;
+   return list1;
+}
+
+StrList_t *StrList_append(StrList_t *list1, StrList_t *list2) {
+   if (!list1) return list2;
+   return StrList_app(list1, StrList_append(list1->next, list2));
+}
+
+StrList_t *StrList_make(char *str) {
+   StrList_t *list = (StrList_t *)calloc(1, sizeof(StrList_t));
+   list->str = str;
+   return list;
+}
+
+/*#define COMMON_TEST*/
+#ifdef COMMON_TEST
+int main(int argc, char const *argv[])
+{
+   StrList_t *list = strlist("hello", NULL);
+   const char *strs[] = {"hi", "how", "are", "you"};
+   int i;
+   for (i=0; i<sizeof(strs)/sizeof(char *); ++i) {
+      printf("going to add %s\n", strs[i]); fflush(stdout);
+      StrList_append(list, strlist(strs[i], NULL));
+      StrList_print(list);
+   }
+   return 0;
+}
+#endif

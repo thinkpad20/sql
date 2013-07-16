@@ -20,6 +20,10 @@ typedef struct KeyDec_t {
    struct KeyDec_t *next;
 } KeyDec_t;
 
+typedef struct TableReference_s {
+   char *table_name, *alias;
+} TableReference_t;
+
 Table_t *Table_make(const char *name, Column_t *columns, KeyDec_t *decs);
 
 /* setting primary and foreign keys outside of columns */
@@ -28,9 +32,11 @@ KeyDec_t *KeyDec_append(KeyDec_t *decs, KeyDec_t *dec);
 KeyDec_t *ForeignKeyDec(ForeignKeyRef_t fkr);
 KeyDec_t *PrimaryKeyDec(StrList_t *col_names);
 
-void Table_print(Table_t *table);
 
+void Table_print(Table_t *table);
 void Table_delete(Table_t *table);
+
+TableReference_t *TableReference_make(char *table_name, char *alias);
 
 void add_table(Table_t *table);
 

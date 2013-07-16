@@ -26,5 +26,10 @@ typedef struct StrList_t {
 
 char *typeToString(enum data_type type, char *buf);
 StrList_t *strlist(const char *str, StrList_t *next);
+StrList_t *StrList_make(char *str);
+void StrList_print(StrList_t *list);
+void upInd(void);
+void downInd(void);
+void indent_print(const char *format,...);
 
 #endif
