@@ -25,8 +25,7 @@ typedef struct RA_Sigma {
 } RA_Sigma;
 
 typedef struct RA_Pi {
-   unsigned num_cols;
-   char **cols;
+   Expression *expr_list;
    RA *ra;
 } RA_Pi;
 
@@ -66,7 +65,7 @@ void printRA(RA *ra);
 
 RA *Table(const char *name);
 RA *Sigma(RA *ra, Condition *expr);
-RA *Pi(RA *ra, unsigned num_cols, ...);
+RA *Pi(RA *ra, Expression *expr_list);
 RA *Union(RA *ra1, RA *ra2);
 RA *Difference(RA *ra1, RA *ra2);
 RA *Cross(RA *ra1, RA *ra2);

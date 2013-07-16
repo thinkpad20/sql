@@ -20,12 +20,9 @@ void printRA(RA *ra) {
          indent_print(")");
          break;
       case RA_PI:
-         indent_print("Pi([");
-         for (i=0; i<ra->ra.pi.num_cols; ++i) {
-            if (i != 0) printf(", ");
-            printf("%s", ra->ra.pi.cols[i]);
-         }
-         printf("], ");
+         indent_print("Pi(");
+         printExpressionList(ra->ra.pi.expr_list);
+         printf(", ");
          upInd();
          printRA(ra->ra.pi.ra);
          downInd();
@@ -92,18 +89,11 @@ RA *Sigma (RA *ra, Condition *cond) {
    return new_ra;
 }
 
-RA *Pi (RA *ra, unsigned num_cols, ...) {
-   size_t i;
-   va_list argp;
+RA *Pi (RA *ra, Expression *expr_list) {
    RA *new_ra = (RA *)calloc(1, sizeof(RA));
    new_ra->t = RA_PI;
    new_ra->ra.pi.ra = ra;
-   new_ra->ra.pi.num_cols = num_cols;
-   new_ra->ra.pi.cols = (char **)calloc(num_cols, sizeof(char *));
-   va_start(argp, num_cols);
-   for (i=0; i<num_cols; ++i) {
-      new_ra->ra.pi.cols[i] = strdup(va_arg(argp, const char *));
-   }
+   new_ra->ra.pi.expr_list = expr_list;
    return new_ra;
 }
 
@@ -157,8 +147,7 @@ void deleteRA(RA *ra) {
          break;
       case RA_PI:
          deleteRA(ra->ra.pi.ra);
-         for (i=0; i<ra->ra.pi.num_cols; ++i)
-            free(ra->ra.pi.cols[i]);
+         deleteExpressionList(ra->ra.pi.expr_list);
          break;
       case RA_UNION:
       case RA_DIFFERENCE:

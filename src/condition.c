@@ -4,19 +4,29 @@ void printCondition(Condition *cond) {
    if (!cond) return; /* just in case */
    switch(cond->t) {
       case RA_COND_EQ:
-         printf("%s = %s", cond->cond.comp.col1, cond->cond.comp.col2);
+         printExpression(cond->cond.comp.expr1);
+         printf(" = ");
+         printExpression(cond->cond.comp.expr2);
          break;
       case RA_COND_LT:
-         printf("%s < %s", cond->cond.comp.col1, cond->cond.comp.col2);
+         printExpression(cond->cond.comp.expr1);
+         printf(" < ");
+         printExpression(cond->cond.comp.expr2);
          break;
       case RA_COND_GT:
-         printf("%s > %s", cond->cond.comp.col1, cond->cond.comp.col2);
+         printExpression(cond->cond.comp.expr1);
+         printf(" > ");
+         printExpression(cond->cond.comp.expr2);
          break;
       case RA_COND_LEQ:
-         printf("%s <= %s", cond->cond.comp.col1, cond->cond.comp.col2);
+         printExpression(cond->cond.comp.expr1);
+         printf(" <= ");
+         printExpression(cond->cond.comp.expr2);
          break;
       case RA_COND_GEQ:
-         printf("%s >= %s", cond->cond.comp.col1, cond->cond.comp.col2);
+         printExpression(cond->cond.comp.expr1);
+         printf(" >= ");
+         printExpression(cond->cond.comp.expr2);
          break;
       case RA_COND_AND:
          printCondition(cond->cond.binary.cond1);
@@ -38,43 +48,43 @@ void printCondition(Condition *cond) {
    }
 }
 
-Condition *Eq(const char *col1, const char *col2) {
+Condition *Eq(Expression *expr1, Expression *expr2) {
    Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
    new_cond->t = RA_COND_EQ;
-   new_cond->cond.comp.col1 = strdup(col1);
-   new_cond->cond.comp.col2 = strdup(col2);
+   new_cond->cond.comp.expr1 = expr1;
+   new_cond->cond.comp.expr2 = expr2;
    return new_cond;
 }
 
-Condition *Lt(const char *col1, const char *col2) {
+Condition *Lt(Expression *expr1, Expression *expr2) {
    Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
    new_cond->t = RA_COND_LT;
-   new_cond->cond.comp.col1 = strdup(col1);
-   new_cond->cond.comp.col2 = strdup(col2);
+   new_cond->cond.comp.expr1 = expr1;
+   new_cond->cond.comp.expr2 = expr2;
    return new_cond;
 }
 
-Condition *Gt(const char *col1, const char *col2) {
+Condition *Gt(Expression *expr1, Expression *expr2) {
    Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
    new_cond->t = RA_COND_GT;
-   new_cond->cond.comp.col1 = strdup(col1);
-   new_cond->cond.comp.col2 = strdup(col2);
+   new_cond->cond.comp.expr1 = expr1;
+   new_cond->cond.comp.expr2 = expr2;
    return new_cond;
 }
 
-Condition *Leq(const char *col1, const char *col2) {
+Condition *Leq(Expression *expr1, Expression *expr2) {
    Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
    new_cond->t = RA_COND_LEQ;
-   new_cond->cond.comp.col1 = strdup(col1);
-   new_cond->cond.comp.col2 = strdup(col2);
+   new_cond->cond.comp.expr1 = expr1;
+   new_cond->cond.comp.expr2 = expr2;
    return new_cond;
 }
 
-Condition *Geq(const char *col1, const char *col2) {
+Condition *Geq(Expression *expr1, Expression *expr2) {
    Condition *new_cond = (Condition *)calloc(1, sizeof(Condition));
    new_cond->t = RA_COND_GEQ;
-   new_cond->cond.comp.col1 = strdup(col1);
-   new_cond->cond.comp.col2 = strdup(col2);
+   new_cond->cond.comp.expr1 = (expr1);
+   new_cond->cond.comp.expr2 = (expr2);
    return new_cond;
 }
 
@@ -108,8 +118,8 @@ void deleteCondition(Condition *cond) {
       case RA_COND_GEQ:
       case RA_COND_GT:
       case RA_COND_LT:
-         free(cond->cond.comp.col1);
-         free(cond->cond.comp.col2);
+         free(cond->cond.comp.expr1);
+         free(cond->cond.comp.expr2);
          break;
       case RA_COND_AND:
       case RA_COND_OR:

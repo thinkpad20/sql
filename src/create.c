@@ -4,59 +4,6 @@
 vector_t *tables = NULL;
 static ChiTable *add_primary_key(ChiTable *table, const char *col_name);
 
-ChiColumn *Column(const char *name, enum data_type type, Constraint *constraints) {
-   ChiColumn *new_column = (ChiColumn *)calloc(1, sizeof(ChiColumn));
-   new_column->name = strdup(name);
-   new_column->type = type;
-   new_column->constraints = constraints;
-   return new_column;
-}
-
-static ChiColumn *add_constraints(ChiColumn *column, Constraint *constraints) {
-   column->constraints = append_constraint(column->constraints, constraints);
-   return column;
-}
-
-Constraint *append_constraint(Constraint *constraints, Constraint *constraint) {
-   if (constraints == NULL)
-      constraints = constraint;
-   else
-      constraints->next = constraint;
-   return constraints;
-}
-
-void printConstraint(void *constraint_voidp) {
-   Constraint *constraint = (Constraint *)constraint_voidp;
-   switch(constraint->t) {
-      case CONS_DEFAULT:
-         printf("Default: ");
-         printLiteralVal(constraint->constraint.default_val);
-         break;
-      case CONS_PRIMARY_KEY:
-         printf("Primary Key");
-         break;
-      case CONS_UNIQUE:
-         printf("Unique");
-         break;
-      case CONS_FOREIGN_KEY:
-         printf("Foreign key (%s, %s)", constraint->constraint.ref.table_name, 
-                                          constraint->constraint.ref.table_col_name);
-         break;
-      case CONS_AUTO_INCREMENT:
-         printf("Auto increment");
-         break;
-      case CONS_NOT_NULL:
-         printf("Not null");
-         break;
-      case CONS_CHECK:
-         printf("Check: ");
-         printCondition(constraint->constraint.check);
-         break;
-      default:
-         printf("Unknown constraint type");
-   }
-}
-
 ChiTable *add_foreign_key(ChiTable *table, ForeignKeyReference fkr) {
    if (table != NULL) {
       /* find the column that matches the cname given, and add this reference */
@@ -172,9 +119,4 @@ void add_table(ChiTable *table) {
 KeyDec *append_key_dec(KeyDec *decs, KeyDec *dec) {
    decs->next = dec;
    return decs;
-}
-
-ChiColumn *append_column(ChiColumn *columns, ChiColumn *column) {
-   columns->next = column;
-   return columns;
 }

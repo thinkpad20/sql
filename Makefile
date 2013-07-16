@@ -47,10 +47,18 @@ bin/sql_parser: src/y.tab.c src/lex.yy.c deps
 	@mkdir -p bin
 	$(CC) -o bin/sql_parser src/y.tab.c src/lex.yy.c $(DEPS) -ly -ll
 
-test: all
+test: selecttest inserttest deletetest createtest
+
+selecttest: all
 	@./parsesql.sh tests/selecttest.sql
+
+inserttest: all
 	@./parsesql.sh tests/insertintotest.sql
+
+deletetest: all
 	@./parsesql.sh tests/deletefromtest.sql
+
+createtest: all
 	@./parsesql.sh tests/createtest.sql
 
 cleanup:

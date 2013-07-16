@@ -1,17 +1,20 @@
+#ifndef __CONDITION_H_
+#define __CONDITION_H_
+
 #include "common.h"
 #include "expression.h"
 
 /*
 data Condition = Eq Expression Expression
-                | Lt Expression Expression
-                | Gt Expression Expression
-                | And Condition Condition
-                | Or Condition Condition
-                | Not Condition
+               | Lt Expression Expression
+               | Gt Expression Expression
+               | And Condition Condition
+               | Or Condition Condition
+               | Not Condition
 */
 
 typedef struct CondComp {
-   char *col1, *col2;
+   Expression *expr1, *expr2;
 } CondComp;
 
 typedef struct CondBinary {
@@ -42,14 +45,18 @@ struct Condition {
    } cond;
 };
 
-Condition *Eq(const char *col1, const char *col2);
-Condition *Lt(const char *col1, const char *col2);
-Condition *Gt(const char *col1, const char *col2);
-Condition *Leq(const char *col1, const char *col2);
-Condition *Geq(const char *col1, const char *col2);
+Condition *Eq(Expression *expr1, Expression *expr2);
+Condition *Lt(Expression *expr1, Expression *expr2);
+Condition *Gt(Expression *expr1, Expression *expr2);
+Condition *Leq(Expression *expr1, Expression *expr2);
+Condition *Geq(Expression *expr1, Expression *expr2);
 Condition *And(Condition *cond1, Condition *cond2);
 Condition *Or(Condition *cond1, Condition *cond2);
 Condition *Not(Condition *cond);
 
+typedef Condition * (*binCondFunc) (Expression *, Expression *);
+
 void deleteCondition(Condition *cond);
 void printCondition(Condition *cond);
+
+#endif

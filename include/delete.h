@@ -4,12 +4,12 @@
 #include "common.h"
 
 typedef struct ChiDelete {
-   RA *ra;
+   char *table_name;
    Condition *where;
 } ChiDelete;
 
-ChiDelete *Delete(RA *ra, Condition *where);
+ChiDelete *Delete(const char *table_name, Condition *where);
 
-void deleteChiDelete(ChiDelete *del);
+void deleteDelete(ChiDelete *del);
 
 #endif

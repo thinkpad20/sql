@@ -38,6 +38,7 @@ by 							{ return BY; }
 delete 						{ return DELETE; }
 as 							{ return AS; }
 int 							{ return INT; }
+integer                 { return INT; }
 double 						{ return DOUBLE; }
 char 							{ return CHAR; }
 varchar 						{ return VARCHAR; }
@@ -66,10 +67,11 @@ true                    { return TRUE; }
 false                   { return FALSE; }
 false                   { return CASE; }
 when                    { return WHEN; }
+bit                     { return BIT; }
 [a-zA-Z][a-zA-Z0-9_]*   { yylval.strval = strdup(yytext); 
                           if (yydebug) printf("lexed identifier '%s'\n", yytext); 
                           return IDENTIFIER; }
-((\"[^\"]*\")|(\'[^\']*\')) 	{ yylval.strval = strdup(yytext); return STRING_LITERAL; }
+((\"[^\"]*\")|(\'[^\']*\')) { yylval.strval = strndup(yytext+1, strlen(yytext) - 2); return STRING_LITERAL; }
 [+-]?[0-9]+ 				{ yylval.ival = atoi(yytext); return INT_LITERAL; }
 ([0-9]+|([0-9]*\.[0-9]+)([eE][-+]?[0-9]+)?)	{ yylval.dval = atof(yytext); return DOUBLE_LITERAL; }
 [ \t\r]+                  { /* ignore */ }

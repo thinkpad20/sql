@@ -46,10 +46,10 @@ void printLiteralVal(LiteralVal *val) {
          printf("%f", val->val.dval);
          break;
       case TYPE_CHAR:
-         printf("%c", val->val.cval);
+         printf("'%c'", val->val.cval);
          break;
       case TYPE_TEXT:
-         printf("%s", val->val.strval);
+         printf("\"%s\"", val->val.strval);
          break;
       default:
          printf("(unknown type)");

@@ -1,13 +1,13 @@
 CREATE TABLE Users (
    id int NOT NULL AUTO_INCREMENT, 
-   username text(50) DEFAULT "hello",
+   username varchar(50) DEFAULT "hello",
    fullname text(250),
-   gender char DEFAULT 'j',
+   gender char DEFAULT 'M',
    PRIMARY KEY (id)
 );
 
 CREATE TABLE Posts (
-   id int NOT NULL PRIMARY KEY,
+   id integer NOT NULL PRIMARY KEY,
    user_id int NOT NULL FOREIGN KEY REFERENCES Users(id),
    content text(250) DEFAULT "this is the default post..."
 );
@@ -19,5 +19,5 @@ CREATE TABLE Likes (
 );
 
 CREATE TABLE Hashtag (
-   content text(250) CHECK a != b
+   content text(250) CHECK a != 3
 );

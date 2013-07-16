@@ -1,3 +1,6 @@
+#ifndef __COLUMN_H_
+#define __COLUMN_H_
+
 #include "common.h"
 #include "literal.h"
 
@@ -34,6 +37,10 @@ typedef struct ChiColumn {
    struct ChiColumn *next;
 } ChiColumn;
 
+typedef struct ColumnReference {
+   char *tableName, *columnName, *columnAlias;
+} ColumnReference;
+
 /* constraints on single columns */
 ForeignKeyReference makeFullFKeyReference(const char *cname, ForeignKeyReference fkey);
 ForeignKeyReference makeFKeyReference(const char *foreign_tname,
@@ -48,9 +55,17 @@ Constraint *Unique(void);
 Constraint *Check(Condition *cond);
 Constraint *ColumnSize(unsigned size);
 Constraint *append_constraint(Constraint *constraints, Constraint *constraint);
+ChiColumn *add_constraints(ChiColumn *column, Constraint *constraints);
 ChiColumn *Column(const char *name, enum data_type type, Constraint *constraints);
 ChiColumn *append_column(ChiColumn *columns, ChiColumn *column);
+
+ColumnReference *makeColumnReference(const char *, const char *);
 
 void printConstraint(void *constraint);
 void printConstraints(Constraint *constraints);
 void deleteColumns(ChiColumn *column);
+
+/* sets the size of the next column */
+void set_size(ssize_t size);
+
+#endif
