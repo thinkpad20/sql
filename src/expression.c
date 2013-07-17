@@ -1,7 +1,5 @@
 #include "../include/expression.h"
 
-static void deleteExpression(Expression_t *expr);
-
 Expression_t *Term(const char *str) {
    Expression_t *new_expr = (Expression_t *)calloc(1, sizeof(Expression_t));
    new_expr->t = EXPR_TERM;
@@ -42,7 +40,7 @@ Expression_t *TermFunction(int functype, Expression_t *expr) {
    return new_expr;
 }
 
-static void printTerm(ExprTerm term) {
+static void Term_print(ExprTerm term) {
    switch (term.t) {
       case TERM_ID:
          printf("%s", term.id);
@@ -88,12 +86,13 @@ static void printTerm(ExprTerm term) {
             default:
                printf("Unknown function");
          }
+         break;
       default:
          printf("Unknown term type");
    }
 }
 
-static void deleteTerm(ExprTerm term) {
+static void Term_delete(ExprTerm term) {
    switch (term.t) {
       case TERM_ID:
          free(term.id);
@@ -111,19 +110,19 @@ static void deleteTerm(ExprTerm term) {
       case TERM_FUNC:
          switch (term.f.t) {
             case FUNC_AVG:
-               deleteExpression(term.f.expr);
+               Expression_delete(term.f.expr);
                break;
             case FUNC_COUNT:
-               deleteExpression(term.f.expr);
+               Expression_delete(term.f.expr);
                break;
             case FUNC_MAX:
-               deleteExpression(term.f.expr);
+               Expression_delete(term.f.expr);
                break;
             case FUNC_MIN:
-               deleteExpression(term.f.expr);
+               Expression_delete(term.f.expr);
                break;
             case FUNC_SUM:
-               deleteExpression(term.f.expr);
+               Expression_delete(term.f.expr);
                break;
             default:
                printf("Can't delete unknown function\n");
@@ -201,7 +200,7 @@ void Expression_print(Expression_t *expr) {
          Expression_print(expr->expr.unary.expr);
          break;
       case EXPR_TERM:
-         printTerm(expr->expr.term);
+         Term_print(expr->expr.term);
          break;
       default:
          printf("(Unknown expression type '%d')", expr->t);
@@ -236,33 +235,33 @@ Expression_t *add_alias(Expression_t *expr, const char *alias) {
    return expr;
 }
 
-static void deleteExpression(Expression_t *expr) {
+void Expression_delete(Expression_t *expr) {
    switch (expr->t) {
       case EXPR_CONCAT:
-         deleteExpression(expr->expr.binary.expr1);
-         deleteExpression(expr->expr.binary.expr2);
+         Expression_delete(expr->expr.binary.expr1);
+         Expression_delete(expr->expr.binary.expr2);
          break;
       case EXPR_PLUS:
-         deleteExpression(expr->expr.binary.expr1);
-         deleteExpression(expr->expr.binary.expr2);
+         Expression_delete(expr->expr.binary.expr1);
+         Expression_delete(expr->expr.binary.expr2);
          break;
       case EXPR_MINUS:
-         deleteExpression(expr->expr.binary.expr1);
-         deleteExpression(expr->expr.binary.expr2);
+         Expression_delete(expr->expr.binary.expr1);
+         Expression_delete(expr->expr.binary.expr2);
          break;
       case EXPR_MULTIPLY:
-         deleteExpression(expr->expr.binary.expr1);
-         deleteExpression(expr->expr.binary.expr2);
+         Expression_delete(expr->expr.binary.expr1);
+         Expression_delete(expr->expr.binary.expr2);
          break;
       case EXPR_DIVIDE:
-         deleteExpression(expr->expr.binary.expr1);
-         deleteExpression(expr->expr.binary.expr2);
+         Expression_delete(expr->expr.binary.expr1);
+         Expression_delete(expr->expr.binary.expr2);
          break;
       case EXPR_NEG:
-         deleteExpression(expr->expr.unary.expr);
+         Expression_delete(expr->expr.unary.expr);
          break;
       case EXPR_TERM:
-         deleteTerm(expr->expr.term);
+         Term_delete(expr->expr.term);
          break;
       default:
          printf("Can't delete unknown expression type '%d')", expr->t);
@@ -271,7 +270,7 @@ static void deleteExpression(Expression_t *expr) {
    free(expr);
 }
 
-void deleteExpressionList(Expression_t *expr) {
+void Expression_deleteList(Expression_t *expr) {
 
 }
 

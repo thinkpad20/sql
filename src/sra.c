@@ -1,5 +1,7 @@
 #include "../include/sra.h"
 
+static SRA_t *SRABinary(SRA_t *sra1, SRA_t *sra2, enum SRAType t);
+
 SRA_t *SRATable(TableReference_t *ref) {
    SRA_t *sra = (SRA_t *)calloc(1, sizeof(SRA_t));
    sra->t = SRA_TABLE;
@@ -16,35 +18,41 @@ SRA_t *SRAProject(SRA_t *sra, Expression_t *expr) {
 }
 
 SRA_t *SRASelect(SRA_t *sra, Condition_t *cond) {
-   SRA_t *new_sra = (SRA_t *)calloc(1, sizeof(SRA_t));
-   new_sra->t = SRA_SELECT;
-   new_sra->select.sra = sra;
-   new_sra->select.cond = cond;
-   return new_sra;
+   if (!cond) {
+      return sra;
+   } else {
+      SRA_t *new_sra = (SRA_t *)calloc(1, sizeof(SRA_t));
+      new_sra->t = SRA_SELECT;
+      new_sra->select.sra = sra;
+      new_sra->select.cond = cond;
+      return new_sra;
+   }
 }
 
-SRA_t *SRANaturalJoin(SRAList_t *sras) {
-   SRA_t *new_sra = (SRA_t *)calloc(1, sizeof(SRA_t));
-   new_sra->t = SRA_NATURAL_JOIN;
-   new_sra->natjoin.sras = sras;
-   return new_sra;
-}
-
-SRA_t *SRAJoin(SRAList_t *sras, JoinCondition_t *cond) {
+SRA_t *SRAJoin(SRA_t *sra1, SRA_t *sra2, JoinCondition_t *cond) {
    SRA_t *new_sra = (SRA_t *)calloc(1, sizeof(SRA_t));
    new_sra->t = SRA_JOIN;
-   new_sra->join.sras = sras;
+   new_sra->join.sra1 = sra1;
+   new_sra->join.sra2 = sra2;
    new_sra->join.opt_cond = cond;
    return new_sra;
 }
 
-SRA_t *SRAOuterJoin(enum OJType t, SRAList_t *sras, JoinCondition_t *cond) {
-   SRA_t *new_sra = (SRA_t *)calloc(1, sizeof(SRA_t));
-   new_sra->t = SRA_OUTER_JOIN;
-   new_sra->ojoin.t = t;
-   new_sra->ojoin.sras = sras;
-   new_sra->ojoin.opt_cond = cond;
-   return new_sra;
+SRA_t *SRALeftOuterJoin(SRA_t *sra1, SRA_t *sra2, JoinCondition_t *cond) {
+   SRA_t *res = SRAJoin(sra1, sra2, cond);
+   res->t = SRA_LEFT_OUTER_JOIN;
+   return res;
+}
+
+SRA_t *SRARightOuterJoin(SRA_t *sra1, SRA_t *sra2, JoinCondition_t *cond) {
+   SRA_t *res = SRAJoin(sra1, sra2, cond);
+   res->t = SRA_RIGHT_OUTER_JOIN;
+   return res;
+}
+SRA_t *SRAFullOuterJoin(SRA_t *sra1, SRA_t *sra2, JoinCondition_t *cond) {
+   SRA_t *res = SRAJoin(sra1, sra2, cond);
+   res->t = SRA_FULL_OUTER_JOIN;
+   return res;
 }
 
 static SRA_t *SRABinary(SRA_t *sra1, SRA_t *sra2, enum SRAType t) {
@@ -67,6 +75,9 @@ SRA_t *SRAIntersect(SRA_t *sra1, SRA_t *sra2) {
    return SRABinary(sra1, sra2, SRA_INTERSECT);
 }
 
+SRA_t *SRANaturalJoin(SRA_t *sra1, SRA_t *sra2) {
+   return SRABinary(sra1, sra2, SRA_NATURAL_JOIN);
+}
 
 void SRA_print(SRA_t *sra) {
    if (!sra) return;
@@ -91,6 +102,25 @@ void SRA_print(SRA_t *sra) {
          printf(", ");
          upInd();
          SRA_print(sra->project.sra);
+         if (sra->project.distinct || 
+             sra->project.group_by || 
+             sra->project.order_by) {
+            printf(",\n");
+            indent_print("Options: ");
+            if (sra->project.distinct)
+               printf("Distinct ");
+            if (sra->project.group_by) {
+               printf("Group by ");
+               Expression_print(sra->project.group_by);
+               printf(" ");
+            }
+            if (sra->project.order_by) {
+               printf("Order by ");
+               Expression_print(sra->project.order_by);
+               printf(sra->project.asc_desc == ORDER_BY_ASC ? " a" : " de");
+               printf("scending");
+            }
+         }
          downInd();
          indent_print(")");
          break;
@@ -125,30 +155,41 @@ void SRA_print(SRA_t *sra) {
          indent_print("Join(");
          upInd();
          SRA_print(sra->binary.sra1);
-         indent_print(", \n");
+         printf(", \n");
          SRA_print(sra->binary.sra2);
-         if (sra->join.opt_cond)
+         if (sra->join.opt_cond) {
+            printf(",\n");
+            indent_print("");
             JoinCondition_print(sra->join.opt_cond);
+         }
          downInd();
          indent_print(")");
          break;
       case SRA_NATURAL_JOIN:
          indent_print("NaturalJoin(");
          upInd();
-         SRAList_print(sra->natjoin.sras);
+         SRA_print(sra->binary.sra1);
+         printf(", \n");
+         SRA_print(sra->binary.sra2);
          downInd();
          indent_print(")");
          break;
-      case SRA_OUTER_JOIN:
-         if (sra->ojoin.t == OJ_LEFT) printf("Left");
-         else if (sra->ojoin.t == OJ_RIGHT) printf("Right");
-         else if (sra->ojoin.t == OJ_FULL) printf("Full");
-         else printf("Unknown");
-         indent_print("OuterJoin(");
+      case SRA_LEFT_OUTER_JOIN:
+      case SRA_RIGHT_OUTER_JOIN:
+      case SRA_FULL_OUTER_JOIN:
+         if (sra->t == SRA_LEFT_OUTER_JOIN) indent_print("Left");
+         else if (sra->t == SRA_RIGHT_OUTER_JOIN) indent_print("Right");
+         else indent_print("Full");
+         printf("OuterJoin(");
          upInd();
-         SRAList_print(sra->ojoin.sras);
-         if (sra->ojoin.opt_cond)
-            JoinCondition_print(sra->ojoin.opt_cond);
+         SRA_print(sra->join.sra1);
+         printf(",\n");
+         SRA_print(sra->join.sra2);
+         if (sra->join.opt_cond) {
+            printf(",\n");
+            indent_print("");
+            JoinCondition_print(sra->join.opt_cond);
+         }
          downInd();
          indent_print(")");
          break;
@@ -158,39 +199,113 @@ void SRA_print(SRA_t *sra) {
 }
 
 void JoinCondition_print(JoinCondition_t *cond) {
-   if (cond->on) {
-      printf("on ");
+   if (cond->t == JOIN_COND_ON) {
+      printf("On: ");
       Condition_print(cond->on);
    }
-   if (cond->using_list) {
-      printf("using ");
-      StrList_print(cond->using_list);
+   else if (cond->t == JOIN_COND_USING) {
+      printf("Using: ");
+      StrList_print(cond->col_list);
+   }
+   else {
+      printf("(Unknown JoinCondition type)");
    }
 }
 
-void SRAList_print(SRAList_t *sras) {
-   int first = 1;
-   printf("[");
-   while (sras) {
-      if (first) first = 0; else printf(", ");
-      SRA_print(sras->sra);
-      sras = sras->next;
+SRA_t *SRA_applyOption(SRA_t *sra, ProjectOption_t *option) {
+   if (sra->t != SRA_PROJECT) {
+      fprintf(stderr, "Error: can't apply order by to anything except project.\n");
+      exit(1);
+   } else if (option != NULL) {
+      if (option->order_by) {
+         sra->project.order_by = option->order_by;
+         sra->project.asc_desc = option->asc_desc;
+      }
+      if (option->group_by) {
+         sra->project.group_by = option->group_by;
+      }
    }
-   printf("]");
+   return sra;
 }
 
-SRAList_t *SRAList_make(SRA_t *sra) {
-   SRAList_t *list = (SRAList_t *)calloc(1, sizeof(SRAList_t));
-   list->sra = sra;
-   return list;
+void ProjectOption_delete(ProjectOption_t *opt) {
+   if (opt->group_by)
+      Expression_delete(opt->group_by);
+   if (opt->order_by)
+      Expression_delete(opt->order_by);
+   free(opt);
 }
 
-static SRAList_t *SRAList_app(SRAList_t *list1, SRAList_t *list2) {
-   list1->next = list2;
-   return list1;
+ProjectOption_t *OrderBy_make(Expression_t *expr, enum OrderBy asc_desc) {
+   ProjectOption_t *ob = (ProjectOption_t *)calloc(1, sizeof(ProjectOption_t));
+   ob->asc_desc = asc_desc;
+   ob->order_by = expr;
+   return ob;
 }
 
-SRAList_t *SRAList_append(SRAList_t *list1, SRAList_t *list2) {
-   if (!list1) return list2;
-   return SRAList_app(list1, SRAList_append(list1->next, list2));
+ProjectOption_t *GroupBy_make(Expression_t *expr) {
+   ProjectOption_t *gb = (ProjectOption_t *)calloc(1, sizeof(ProjectOption_t));
+   gb->group_by = expr;
+   return gb;
+}
+
+ProjectOption_t *ProjectOption_combine(ProjectOption_t *op1, 
+                                        ProjectOption_t *op2)  {
+   if (op1->group_by && op2->group_by) {
+      fprintf(stderr, "Error: can't combine two group_bys.\n");
+      exit(1);
+   }
+   if (op1->order_by && op2->order_by) {
+      fprintf(stderr, "Error: can't combine two order_bys.\n");
+      exit(1);
+   }
+   if (op2->group_by) {
+      op1->group_by = op2->group_by;
+      op2->group_by = NULL;
+      ProjectOption_delete(op2);
+      return op1;
+   } else {
+      op2->group_by = op1->group_by;
+      op1->group_by = NULL;
+      ProjectOption_delete(op1);
+      return op2;
+   }
+}
+
+SRA_t *SRA_makeDistinct(SRA_t *sra) {
+   if (sra->t != SRA_PROJECT) {
+      fprintf(stderr, "Error: distinct property only applies to Project\n");
+   } else {
+      sra->project.distinct = 1;
+   }
+   return sra;
+}
+
+JoinCondition_t *On(Condition_t *cond) {
+   JoinCondition_t *jc = (JoinCondition_t *)calloc(1, sizeof(JoinCondition_t));
+   jc->t = JOIN_COND_ON;
+   jc->on = cond;
+   return jc;
+}
+
+JoinCondition_t *Using(StrList_t *col_list) {
+   JoinCondition_t *jc = (JoinCondition_t *)calloc(1, sizeof(JoinCondition_t));
+   jc->t = JOIN_COND_USING;
+   jc->col_list = col_list;
+   return jc;
+}
+
+void ProjectOption_print(ProjectOption_t *op) {
+   if (op->order_by) {
+      printf("Order by: (%p) ", op->order_by);
+      Expression_print(op->order_by);
+      printf(op->asc_desc == ORDER_BY_ASC ? " ascending" : " descending");
+   }
+   if (op->group_by) {
+      printf("Group by: (%p) ", op->group_by);
+      Expression_print(op->group_by);
+   }
+   if (!op->order_by && !op->group_by) {
+      printf("Empty ProjectOption\n");
+   }
 }

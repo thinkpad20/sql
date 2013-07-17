@@ -111,9 +111,6 @@ void add_table(Table_t *table) {
       tables = vector_withData(1, table);
    else
       tables = vector_push(tables, table);
-   printf("Added a new table:\n");
-   Table_print(table);
-   printf("Now have %lu tables total\n", vector_size(tables));
 }
 
 KeyDec_t *KeyDec_append(KeyDec_t *decs, KeyDec_t *dec) {

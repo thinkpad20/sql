@@ -3,13 +3,13 @@
 
 #include "common.h"
 
-typedef struct ChiDelete {
+typedef struct Delete_t {
    char *table_name;
    Condition_t *where;
-} ChiDelete;
+} Delete_t;
 
-ChiDelete *makeDelete(const char *table_name, Condition_t *where);
-void deleteDelete(ChiDelete *del);
-void printDelete(ChiDelete *del);
+Delete_t *Delete_make(const char *table_name, Condition_t *where);
+void deleteDelete(Delete_t *del);
+void Delete_print(Delete_t *del);
 
 #endif

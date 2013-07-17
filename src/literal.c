@@ -60,9 +60,14 @@ void Literal_printList(Literal_t *val_list) {
    printf("]");
 }
 
-Literal_t *Literal_append(Literal_t *val, Literal_t *toAppend) {
-   val->next = toAppend;
-   return val;
+static Literal_t *Literal_app(Literal_t *lit1, Literal_t *lit2) {
+   lit1->next = lit2;
+   return lit1;
+}
+
+Literal_t *Literal_append(Literal_t *lit1, Literal_t *lit2) {
+   if (!lit1) return lit2;
+   return Literal_app(lit1, Literal_append(lit1->next, lit2));
 }
 
 void Literal_delete(Literal_t *lval) {

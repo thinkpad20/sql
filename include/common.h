@@ -25,8 +25,9 @@ typedef struct StrList_t {
 } StrList_t;
 
 char *typeToString(enum data_type type, char *buf);
-StrList_t *strlist(const char *str, StrList_t *next);
+StrList_t *StrList_makeWithNext(const char *str, StrList_t *next);
 StrList_t *StrList_make(char *str);
+StrList_t *StrList_append(StrList_t *list1, StrList_t *list2);
 void StrList_print(StrList_t *list);
 void upInd(void);
 void downInd(void);

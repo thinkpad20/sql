@@ -51,6 +51,7 @@ void Condition_print(Condition_t *cond) {
          break;
       case RA_COND_IN:
          Expression_print(cond->cond.in.expr);
+         printf(" in ");
          Literal_printList(cond->cond.in.values_list);
          break;
       default:
@@ -149,7 +150,7 @@ void Condition_delete(Condition_t *cond) {
          break;
       case RA_COND_IN:
          Literal_deleteList(cond->cond.in.values_list);
-         deleteExpressionList(cond->cond.in.expr);
+         Expression_deleteList(cond->cond.in.expr);
          break;
    }
    free(cond);

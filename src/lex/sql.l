@@ -1,9 +1,13 @@
 %{
 #include "../include/common.h"
 #include "../include/create.h"
+#include "../include/vector.h"
+#include "../include/literal.h"
 #include "../include/insert.h"
 #include "../include/ra.h"
-#include "../include/literal.h"
+#include "../include/sra.h"
+#include "../include/condition.h"
+#include "../include/expression.h"
 #include "../include/delete.h"
 #include "y.tab.h"
 #include <math.h>
@@ -47,6 +51,7 @@ text 							{ return TEXT; }
 join 							{ return JOIN; }
 inner 						{ return INNER; }
 outer 						{ return OUTER; }
+full                    { return FULL; }
 left 							{ return LEFT; }
 right 						{ return RIGHT; }
 natural 						{ return NATURAL; }
@@ -69,6 +74,8 @@ false                   { return FALSE; }
 false                   { return CASE; }
 when                    { return WHEN; }
 bit                     { return BIT; }
+group                   { return GROUP; }
+distinct                { return DISTINCT; }
 [a-zA-Z][a-zA-Z0-9_]*   { yylval.strval = strdup(yytext); 
                           if (yydebug) printf("lexed identifier '%s'\n", yytext); 
                           return IDENTIFIER; }

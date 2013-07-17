@@ -98,6 +98,7 @@ Expression_t *add_alias(Expression_t *expr, const char *alias);
 void Expression_print(Expression_t *);
 void Expression_printList(Expression_t *);
 
-void deleteExpressionList(Expression_t *);
+void Expression_delete(Expression_t *expr);
+void Expression_deleteList(Expression_t *);
 
 #endif

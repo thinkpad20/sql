@@ -143,7 +143,7 @@ void deleteRA(RA *ra) {
          break;
       case RA_PI:
          deleteRA(ra->ra.pi.ra);
-         deleteExpressionList(ra->ra.pi.expr_list);
+         Expression_deleteList(ra->ra.pi.expr_list);
          break;
       case RA_UNION:
       case RA_DIFFERENCE:

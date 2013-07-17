@@ -8,6 +8,7 @@
 #include "../include/literal.h"
 #include "../include/insert.h"
 #include "../include/ra.h"
+#include "../include/sra.h"
 #include "../include/condition.h"
 #include "../include/expression.h"
 #include "../include/delete.h"
@@ -36,7 +37,12 @@ int num_stmts = 0;
 	Condition_t *cond;
 	Expression_t *expr;
 	ColumnReference_t *colref;
-	ChiDelete *del;
+	Delete_t *del;
+	SRA_t *sra;
+	ProjectOption_t *opt;
+	TableReference_t *tref;
+	Table_t *tbl;
+	JoinCondition_t *jcond;
 }
 
 %token CREATE TABLE INSERT INTO SELECT FROM WHERE FULL
@@ -46,13 +52,14 @@ int num_stmts = 0;
 %token JOIN INNER OUTER LEFT RIGHT NATURAL CROSS UNION
 %token VALUES AUTO_INCREMENT ASC DESC UNIQUE IN ON
 %token COUNT SUM AVG MIN MAX INTERSECT EXCEPT DISTINCT
-%token CONCAT TRUE FALSE CASE WHEN DECLARE BIT
+%token CONCAT TRUE FALSE CASE WHEN DECLARE BIT GROUP
 %token <strval> IDENTIFIER
 %token <strval> STRING_LITERAL
 %token <dval> DOUBLE_LITERAL
 %token <ival> INT_LITERAL
 
-%type <ival> column_type bool_op comp_op function_name
+%type <ival> column_type bool_op comp_op select_combo
+%type <ival> function_name opt_distinct join
 %type <strval> column_name table_name opt_alias column_name_or_star
 %type <slist> column_names_list opt_column_names
 %type <constr> opt_constraints constraints constraint
@@ -61,10 +68,15 @@ int num_stmts = 0;
 %type <col> column_dec column_dec_list
 %type <kdec> key_dec opt_key_dec_list key_dec_list
 %type <ins> insert_into
-%type <cond> condition bool_term where_condition
+%type <cond> condition bool_term where_condition opt_where_condition
 %type <expr> expression mulexp primary expression_list term
 %type <colref> column_reference
 %type <del> delete_from
+%type <sra> select select_statement table
+%type <opt> order_by group_by opt_options
+%type <tref> table_ref
+%type <tbl> create_table
+%type <jcond> join_condition opt_join_condition
 
 %start sql_queries
 
@@ -76,31 +88,28 @@ sql_queries
 	;
 
 sql_query
-	: sql_line ';' { printf("parsed %d valid SQL statements\n", ++num_stmts); }
+	: sql_line ';' { /*printf("parsed %d valid SQL statements\n", ++num_stmts);*/ }
 	;
 
 sql_line
-	: create_table 
-	| select 		
-	| insert_into 	
-	| delete_from 	
+	: create_table { Table_print($1); }
+	| select 		{ SRA_print($1); puts(""); }
+	| insert_into 	{ Insert_print($1); }
+	| delete_from 	{ Delete_print($1); }
 	| /* empty */
 	;
 
 create_table
 	: CREATE TABLE table_name '(' column_dec_list opt_key_dec_list ')' 
 		{
-			Table_t *table = Table_make($3, $5, $6);
-			add_table(table);
+			$$ = Table_make($3, $5, $6);
+			add_table($$);
 		}
 	;
 
 column_dec_list
 	: column_dec { $$ = $1; }
-	| column_dec_list ',' column_dec 
-		{ 
-			$$ = Column_append($1, $3); 
-		}
+	| column_dec_list ',' column_dec { $$ = Column_append($1, $3); }
 	;
 
 column_dec
@@ -125,8 +134,6 @@ column_type
 				exit(1);
 			}
 			Column_setSize($3);
-			fprintf(stderr, "****WARNING: sized types (line %d) "
-					 "not yet supported in chiDB.\n", yylineno); 
 		}
 	;
 
@@ -176,58 +183,70 @@ constraint
 	| FOREIGN KEY references_stmt { $$ = ForeignKey($3); }
 	| DEFAULT literal_value { $$ = Default($2); }
 	| AUTO_INCREMENT { $$ = AutoIncrement(); }
-	| CHECK condition { $$ = Check($2); 
-									  fprintf(stderr, "****WARNING, check not yet supported in chiDB\n"); }
+	| CHECK condition { $$ = Check($2); }
 	;
 
 select
-	: select_statement
-	| select select_combo select_statement
+	: select_statement { $$ = $1; }
+	| select select_combo select_statement 
+		{ 
+			$$ = ($2 == UNION) ? SRAUnion($1, $3) :
+				  ($2 == INTERSECT) ? SRAIntersect($1, $3) :
+				  SRAExcept($1, $3);
+		}
 	;
 
 select_combo
-	: UNION | INTERSECT | EXCEPT
+	: UNION {$$ = UNION;}
+	| INTERSECT {$$ = INTERSECT;}
+	| EXCEPT {$$ = EXCEPT;}
 	;
 
 select_statement
-	: SELECT opt_distinct expression_list FROM table opt_select_constraints
+	: SELECT opt_distinct expression_list FROM table opt_where_condition opt_options
 		{
-			/* printf("List of expressions to select: ");
-			Expression_printList($3);
-			puts(""); */
+			if ($6 != NULL) 
+				$$ = SRAProject(SRASelect($5, $6), $3);
+			else
+				$$ = SRAProject($5, $3);
+			if ($7 != NULL)
+				$$ = SRA_applyOption($$, $7); 
+			if ($2 == DISTINCT)
+				$$ = SRA_makeDistinct($$);
 		}
-	| '(' select_statement ')'
+	| '(' select_statement ')' { $$ = $2; }
 	;
 
 opt_distinct
-	: DISTINCT
-	| /* empty */
+	: DISTINCT { $$ = DISTINCT;}
+	| /* empty */ { $$ = 0; }
 	;
 
-opt_select_constraints
-	: select_constraints
-	| /* empty */
+opt_options
+	: order_by {$$ = $1; }
+	| group_by {$$ = $1; }
+	| order_by group_by {$$ = ProjectOption_combine($1, $2);}
+	| group_by order_by {$$ = ProjectOption_combine($1, $2);}
+	| /* empty */ { $$ = NULL; }
 	;
 
-select_constraints
-	: select_constraint
-	| select_constraints select_constraint
-	;
-
-select_constraint
-	: join_condition
-	| where_condition
-	| orderby
+opt_where_condition
+	: where_condition {$$ = $1;}
+	| /* empty */		{$$ = NULL;}
 	;
 
 where_condition
 	: WHERE condition { $$ = $2; }
 	;
 
-orderby
-	: ORDER BY column_name
-	| ORDER BY column_name ASC
-	| ORDER BY column_name DESC
+group_by
+	: GROUP BY expression { $$ = GroupBy_make($3); } 		
+	;
+
+order_by
+	: ORDER BY expression 		{ $$ = OrderBy_make($3, ORDER_BY_ASC); }
+	| ORDER BY expression ASC 	{ $$ = OrderBy_make($3, ORDER_BY_ASC); }
+	| ORDER BY expression DESC { $$ = OrderBy_make($3, ORDER_BY_DESC); }
 	;
 
 condition
@@ -328,7 +347,7 @@ function_name
 	;
 
 column_name_or_star
-	: '*' { $$ = "*"; }
+	: '*' { $$ = strdup("*"); }
 	| column_name { $$ = $1; }
 	;
 
@@ -341,30 +360,52 @@ table_name
 	;
 
 table
-	: table_def
-	| table ',' table_def
-	| table join table_def
+	: table_ref { $$ = SRATable($1); }
+	| table default_join table_ref opt_join_condition { $$ = SRAJoin($1, SRATable($3), $4); }
+	| table join table_ref opt_join_condition
+		{
+			switch ($2) {
+				case SRA_NATURAL_JOIN:
+					$$ = SRANaturalJoin($1, SRATable($3)); 
+					if ($4) {
+						fprintf(stderr, 
+								  "Line %d: WARNING: a NATURAL join cannot have an ON "
+								  "or USING clause. This will be ignored.\n", yylineno);
+					}
+					break;
+				case SRA_LEFT_OUTER_JOIN:
+					$$ = SRALeftOuterJoin($1, SRATable($3), $4); break;
+				case SRA_RIGHT_OUTER_JOIN:
+					$$ = SRARightOuterJoin($1, SRATable($3), $4); break;
+				case SRA_FULL_OUTER_JOIN:
+					$$ = SRAFullOuterJoin($1, SRATable($3), $4); break;
+			}
+		}
+	;
+
+opt_join_condition
+	: join_condition { $$ = $1; }
+	| /* empty */	  { $$ = NULL; }
 	;
 
 join_condition
-	: ON condition
-	| USING '(' column_names_list ')'
+	: ON condition { $$ = On($2); }
+	| USING '(' column_names_list ')' { $$ = Using($3); }
 	;
 
-table_def
-	: table_name opt_alias
+table_ref
+	: table_name opt_alias { $$ = TableReference_make($1, $2);}
 	;
 
 join
-	: default_join
-	| LEFT opt_outer JOIN
-	| RIGHT opt_outer JOIN
-	| NATURAL JOIN
-	| FULL OUTER JOIN
+	: LEFT opt_outer JOIN {$$ = SRA_LEFT_OUTER_JOIN; }
+	| RIGHT opt_outer JOIN { $$ = SRA_RIGHT_OUTER_JOIN; }
+	| FULL opt_outer JOIN { $$ = SRA_FULL_OUTER_JOIN; }
+	| NATURAL JOIN { $$ = SRA_NATURAL_JOIN; }
 	;
 
 default_join
-	: JOIN | CROSS JOIN | INNER JOIN
+	: ',' | JOIN | CROSS JOIN | INNER JOIN
 	;
 
 opt_outer
@@ -376,7 +417,6 @@ insert_into
 	: INSERT INTO table_name opt_column_names VALUES '(' values_list ')'
 		{
 			$$ = Insert_make(Table($3), $4, $7);
-			Insert_print($$);
 		}
 	;
 
@@ -387,14 +427,14 @@ opt_column_names
 
 column_names_list
 	: column_name { $$ = StrList_make($1); }
-	| column_names_list ',' column_name { $$ = StrList_append($1, $3); }
+	| column_names_list ',' column_name { $$ = StrList_append($1, StrList_make($3)); }
 	;
 
 values_list
 	: literal_value { $$ = $1; }
 	| values_list ',' literal_value 
 		{ 
-			$$ = Literal_append($3, $1); 
+			$$ = Literal_append($1, $3); 
 
 		}
 	;
@@ -414,9 +454,7 @@ literal_value
 delete_from
 	: DELETE FROM table_name where_condition
 		{
-			$$ = makeDelete($3, $4);
-			printDelete($$);
-			puts("");
+			$$ = Delete_make($3, $4);
 		}
 	;
 

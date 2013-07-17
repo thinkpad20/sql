@@ -18,7 +18,7 @@ char *typeToString(enum data_type type, char *buf) {
    return buf;
 }
 
-StrList_t *strlist(const char *str, StrList_t *next) {
+StrList_t *StrList_makeWithNext(const char *str, StrList_t *next) {
    StrList_t *list = (StrList_t *)calloc(1, sizeof(StrList_t));
    list->str = strdup(str);
    list->next = next;
@@ -91,12 +91,12 @@ StrList_t *StrList_make(char *str) {
 #ifdef COMMON_TEST
 int main(int argc, char const *argv[])
 {
-   StrList_t *list = strlist("hello", NULL);
+   StrList_t *list = StrList_makeWithNext("hello", NULL);
    const char *strs[] = {"hi", "how", "are", "you"};
    int i;
    for (i=0; i<sizeof(strs)/sizeof(char *); ++i) {
       printf("going to add %s\n", strs[i]); fflush(stdout);
-      StrList_append(list, strlist(strs[i], NULL));
+      StrList_append(list, StrList_makeWithNext(strs[i], NULL));
       StrList_print(list);
    }
    return 0;
