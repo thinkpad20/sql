@@ -43,6 +43,8 @@ int num_stmts = 0;
 	TableReference_t *tref;
 	Table_t *tbl;
 	JoinCondition_t *jcond;
+	Index_t *idx;
+	Create_t *cre;
 }
 
 %token CREATE TABLE INSERT INTO SELECT FROM WHERE FULL
@@ -53,14 +55,16 @@ int num_stmts = 0;
 %token VALUES AUTO_INCREMENT ASC DESC UNIQUE IN ON
 %token COUNT SUM AVG MIN MAX INTERSECT EXCEPT DISTINCT
 %token CONCAT TRUE FALSE CASE WHEN DECLARE BIT GROUP
+%token INDEX
 %token <strval> IDENTIFIER
 %token <strval> STRING_LITERAL
 %token <dval> DOUBLE_LITERAL
 %token <ival> INT_LITERAL
 
 %type <ival> column_type bool_op comp_op select_combo
-%type <ival> function_name opt_distinct join
-%type <strval> column_name table_name opt_alias column_name_or_star
+%type <ival> function_name opt_distinct join opt_unique
+%type <strval> column_name table_name opt_alias 
+%type <strval> index_name column_name_or_star
 %type <slist> column_names_list opt_column_names
 %type <constr> opt_constraints constraints constraint
 %type <lval> literal_value values_list in_statement
@@ -77,6 +81,8 @@ int num_stmts = 0;
 %type <tref> table_ref
 %type <tbl> create_table
 %type <jcond> join_condition opt_join_condition
+%type <idx> create_index
+%type <cre> create
 
 %start sql_queries
 
@@ -92,11 +98,33 @@ sql_query
 	;
 
 sql_line
-	: create_table { Table_print($1); }
+	: create 		{ Create_print($1); }
 	| select 		{ SRA_print($1); puts(""); }
 	| insert_into 	{ Insert_print($1); }
 	| delete_from 	{ Delete_print($1); }
 	| /* empty */
+	;
+
+create
+	: create_table { $$ = Create_fromTable($1); }
+	| create_index { $$ = Create_fromIndex($1); }
+	;
+
+create_index
+	: CREATE opt_unique INDEX index_name ON table_name '(' column_name ')'
+		{ 
+			$$ = Index_make($4, $6, $8); 
+		  	if ($2 == UNIQUE) $$ = Index_makeUnique($$); 
+		}
+	;
+
+opt_unique
+	: UNIQUE { $$ = UNIQUE; }
+	| /* empty */ { $$ = 0; }
+	;
+
+index_name
+	: IDENTIFIER { $$ = $1; }
 	;
 
 create_table

@@ -1,6 +1,8 @@
 ## SQL Parser
 
-This can parse a reasonably large subset of SQL. I'm using lex and yacc as front-ends. Currently, it is mostly just a recognizing parser. However, I'm building up a lot of machinery to represent an abstract syntax tree for Relational Algebra and a sugared variant, as well as some other important commands in SQL (create table, insert, etc).
+This can parse a reasonably large subset of SQL. I'm using lex and yacc. The parser generates an abstract syntax tree which is based on Relational Algebra, extended to fit closer with SQL. This extended relational algebra is termed SRA (sugared relational algebra), as it itself can be compiled into more or less pure relational algebra. The data structures and functions for constructing an RA syntax tree are written; however, the SRA to RA compiler is not.
+
+Since relational algebra primarily deals with only queries, there are separate data structures to deal with Create Table, Create Index, Insert Into, and Delete From (and possibly other things in the future). These don't use RA, but they do, for example, use the Expression part of the abstract syntax tree.
 
 ## Installation and Usage
 
@@ -8,12 +10,12 @@ Clone into the git repository:
 
 ```
 > git clone https://github.com/thinkpad20/sql.git
-> cd sql
 ```
 
 Compile:
 
 ```
+> cd sql
 > make
 ```
 

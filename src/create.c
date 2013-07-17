@@ -55,9 +55,9 @@ KeyDec_t *PrimaryKeyDec(StrList_t *col_names) {
    return kdec;
 }
 
-Table_t *Table_make(const char *name, Column_t *columns, KeyDec_t *decs) {
+Table_t *Table_make(char *name, Column_t *columns, KeyDec_t *decs) {
    Table_t *new_table = (Table_t *)calloc(1, sizeof(Table_t));
-   new_table->name = strdup(name);
+   new_table->name = name;
    new_table->columns = columns;
    return Table_addKeyDecs(new_table, decs);
 }
@@ -123,4 +123,60 @@ TableReference_t *TableReference_make(char *table_name, char *alias) {
    ref->table_name = table_name;
    ref->alias = alias;
    return ref;
+}
+
+Index_t *Index_make(char *name, char *table_name, char *column_name) {
+   Index_t *idx = (Index_t *)calloc(1, sizeof(Index_t));
+   idx->name = name;
+   idx->table_name = table_name;
+   idx->column_name = column_name;
+   return idx;
+}
+
+Index_t *Index_makeUnique(Index_t *idx) {
+   idx->unique = 1;
+   return idx;
+}
+
+void Index_print(Index_t *idx) {
+   printf("Index '%s' on %s (%s)", idx->column_name, 
+                                     idx->table_name, 
+                                     idx->column_name);
+   if (idx->unique) printf(", unique");
+   puts("");
+}
+
+void Index_delete(Index_t *idx) {
+   free(idx->name);
+   free(idx->column_name);
+   free(idx->table_name);
+   free(idx);
+}
+
+Create_t *Create_fromTable(Table_t *table) {
+   Create_t *c = (Create_t *)calloc(1, sizeof(Create_t));
+   c->t = CREATE_TABLE;
+   c->table = table;
+   return c;
+}
+
+Create_t *Create_fromIndex(Index_t *idx) {
+   Create_t *c = (Create_t *)calloc(1, sizeof(Create_t));
+   c->t = CREATE_INDEX;
+   c->index = idx;
+   return c;
+}
+
+void Create_print(Create_t *cre) {
+   if (cre->t == CREATE_TABLE)
+      Table_print(cre->table);
+   else
+      Index_print(cre->index);
+}
+void Create_delete(Create_t *cre) {
+   if (cre->t == CREATE_TABLE)
+      Table_delete(cre->table);
+   else
+      Index_delete(cre->index);
+   free(cre);
 }
