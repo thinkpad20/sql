@@ -58,16 +58,16 @@ bin/sql_parser: src/y.tab.c src/lex.yy.c deps
 test: selecttest inserttest deletetest createtest
 
 selecttest: all
-	@./parsesql.sh tests/selecttest.sql
+	@bin/sql_parser tests/selecttest.sql
 
 inserttest: all
-	@./parsesql.sh tests/insertintotest.sql
+	@bin/sql_parser tests/insertintotest.sql
 
 deletetest: all
-	@./parsesql.sh tests/deletefromtest.sql
+	@bin/sql_parser tests/deletefromtest.sql
 
 createtest: all
-	@./parsesql.sh tests/createtest.sql
+	@bin/sql_parser tests/createtest.sql
 
 cleanup:
 	-rm test.tab.cacc

@@ -487,3 +487,23 @@ delete_from
 	;
 
 %%
+
+int main(int argc, char **argv) {
+	int i;
+	FILE *stdin_save = stdin;
+	puts("Welcome to the SQL parser :)");
+	for (i=1; i<argc; ++i) {
+		FILE *fp = fopen(argv[i], "r");
+		if (fp) {
+			stdin = fp;
+			yyparse();
+			fclose(fp);
+		} else {
+			char buf[100];
+			sprintf(buf, "Error opening file '%s'", argv[i]);
+         perror(buf);
+		}
+	}
+	puts("Thanks for using the SQL parser :)");
+	return 0;
+}
