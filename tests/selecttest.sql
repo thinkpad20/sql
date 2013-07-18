@@ -2,6 +2,12 @@ SELECT DISTINCT "User: " || u.username, p.content from Users u, Posts p WHERE u.
 
 SELECT COUNT(u.username) from Users u NATURAL JOIN Tweets t;
 
+-- this is a comment
+/* this
+is a 
+multiline
+comment*/
+
 SELECT (u.age * 4)/25 as b, p.content
    from Users u
    INNER JOIN Posts p

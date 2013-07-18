@@ -12,7 +12,11 @@
 #include "y.tab.h"
 #include <math.h>
 extern int yydebug;
+int comment_start_lineno;
 %}
+
+%x BLOCK_COMMENT 
+%x LINE_COMMENT
 
 %%
 
@@ -76,6 +80,15 @@ when                    { return WHEN; }
 bit                     { return BIT; }
 group                   { return GROUP; }
 distinct                { return DISTINCT; }
+\/\*                    { BEGIN(BLOCK_COMMENT); comment_start_lineno = yylineno; }
+<BLOCK_COMMENT>\*\/     { BEGIN(INITIAL); }
+<BLOCK_COMMENT><<EOF>>  { fprintf(stderr, "Warning: unclosed comment beginning on line %d\n",
+                                  ++comment_start_lineno); return EOF; }
+<BLOCK_COMMENT>\n       { yylineno++; }
+<BLOCK_COMMENT>.        { /* ignore */ }
+"--"                    { BEGIN(LINE_COMMENT); }
+<LINE_COMMENT>\n        { BEGIN(INITIAL); }
+<LINE_COMMENT>.         { /* ignore */ }
 [a-zA-Z][a-zA-Z0-9_]*   { yylval.strval = strdup(yytext); 
                           if (yydebug) printf("lexed identifier '%s'\n", yytext); 
                           return IDENTIFIER; }
