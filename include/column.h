@@ -12,7 +12,7 @@ enum constraint_type {
    CONS_DEFAULT,
    CONS_AUTO_INCREMENT,
    CONS_CHECK,
-   CONS_SIZE,
+   CONS_SIZE
 };
 
 typedef struct ForeignKeyRef_t {
@@ -34,6 +34,7 @@ typedef struct Column_t {
    char *name;
    enum data_type type;
    Constraint_t *constraints;
+   size_t offset; /* offset in bytes from the beginning of the row */
    struct Column_t *next;
 } Column_t;
 
@@ -60,6 +61,9 @@ Column_t *Column(const char *name, enum data_type type, Constraint_t *constraint
 Column_t *Column_append(Column_t *columns, Column_t *column);
 
 ColumnReference_t *ColumnReference_make(const char *, const char *);
+
+void Column_getOffsets(Column_t *cols);
+size_t Column_getSize(Column_t *col);
 
 void Constraint_print(void *constraint);
 void Constraint_printList(Constraint_t *constraints);

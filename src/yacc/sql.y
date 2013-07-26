@@ -13,7 +13,9 @@
 #include "../include/expression.h"
 #include "../include/delete.h"
 
-void yyerror(char *s);
+#define YYERROR_VERBOSE
+
+void yyerror(const char *s);
 int yylex(void);
 extern int yylineno;
 #define YYDEBUG 0
@@ -488,15 +490,22 @@ delete_from
 
 %%
 
+void yyerror(const char *s) {
+	fprintf(stderr, "%s (line %d)\n", s, yylineno);
+}
+
 int main(int argc, char **argv) {
 	int i;
-	FILE *stdin_save = stdin;
-	puts("Welcome to the SQL parser :)");
+	puts("Welcome to the chiSQL parser :)");
 	for (i=1; i<argc; ++i) {
 		FILE *fp = fopen(argv[i], "r");
 		if (fp) {
+			printf("Parsing file '%s'...\n", argv[i]);
 			stdin = fp;
-			yyparse();
+			if (!yyparse())
+				printf("Parsed successfully!\n");
+			else
+				printf("Please check your code.\n");
 			fclose(fp);
 		} else {
 			char buf[100];
@@ -504,6 +513,6 @@ int main(int argc, char **argv) {
          perror(buf);
 		}
 	}
-	puts("Thanks for using the SQL parser :)");
+	puts("Thanks for using the chiSQL parser :)\n");
 	return 0;
 }

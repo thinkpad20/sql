@@ -59,6 +59,7 @@ Table_t *Table_make(char *name, Column_t *columns, KeyDec_t *decs) {
    Table_t *new_table = (Table_t *)calloc(1, sizeof(Table_t));
    new_table->name = name;
    new_table->columns = columns;
+   Column_getOffsets(columns);
    return Table_addKeyDecs(new_table, decs);
 }
 

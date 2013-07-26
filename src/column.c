@@ -82,6 +82,31 @@ void Column_deleteList(Column_t *column) {
    }
 }
 
+size_t Column_getSize(Column_t *col) {
+   Constraint_t *cons = col->constraints;
+   while (cons) {
+      if (cons->t == CONS_SIZE)
+         return cons->constraint.size;
+      cons = cons->next;
+   }
+   switch (col->type) {
+      case TYPE_CHAR: return sizeof(char);
+      case TYPE_DOUBLE: return sizeof(double);
+      case TYPE_INT: return sizeof(int);
+      case TYPE_TEXT: return 250; /* default text length */
+   }
+}
+
+static void Column_getOffsets_r(Column_t *cols, size_t offset) {
+   if (!cols) return;
+   cols->offset = offset;
+   Column_getOffsets_r(cols->next, Column_getSize(cols));
+}
+
+void Column_getOffsets(Column_t *cols) {
+   Column_getOffsets_r(cols, 0);
+}
+
 void Constraint_printList(Constraint_t *constraints) {
    int first = 1;
    if (constraints) {

@@ -87,7 +87,7 @@ distinct                { return DISTINCT; }
 <BLOCK_COMMENT>\n       { yylineno++; }
 <BLOCK_COMMENT>.        { /* ignore */ }
 "--"                    { BEGIN(LINE_COMMENT); }
-<LINE_COMMENT>\n        { BEGIN(INITIAL); }
+<LINE_COMMENT>\n        { BEGIN(INITIAL); yylineno++; }
 <LINE_COMMENT>.         { /* ignore */ }
 [a-zA-Z][a-zA-Z0-9_]*   { yylval.strval = strdup(yytext); 
                           if (yydebug) printf("lexed identifier '%s'\n", yytext); 

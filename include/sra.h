@@ -66,7 +66,7 @@ enum SRAType {
    SRA_RIGHT_OUTER_JOIN,
    SRA_UNION,
    SRA_EXCEPT,
-   SRA_INTERSECT,
+   SRA_INTERSECT
 };
 
 enum OJType { OJ_LEFT, OJ_RIGHT, OJ_FULL };
@@ -122,7 +122,7 @@ struct SRAList_s {
 };
 
 enum JoinConditionType {
-   JOIN_COND_ON, JOIN_COND_USING, 
+   JOIN_COND_ON, JOIN_COND_USING
 };
 
 struct JoinCondition_s {

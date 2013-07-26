@@ -23,7 +23,7 @@ enum TermType {
    TERM_ID,
    TERM_NULL,
    TERM_COLREF,
-   TERM_FUNC,
+   TERM_FUNC
 };
 
 enum FuncType { 
@@ -64,7 +64,7 @@ enum ExprType {
    EXPR_MULTIPLY,
    EXPR_DIVIDE,
    EXPR_CONCAT,
-   EXPR_NEG,
+   EXPR_NEG
 };
 
 struct Expression_t {

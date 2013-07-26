@@ -41,7 +41,7 @@ void Condition_print(Condition_t *cond) {
       case RA_COND_NOT:
          if (cond->cond.unary.cond->t == RA_COND_EQ) {
             Expression_print(cond->cond.unary.cond->cond.comp.expr1);
-            printf(" <> ");
+            printf(" != ");
             Expression_print(cond->cond.unary.cond->cond.comp.expr2);
          } else {
             printf("not (");
