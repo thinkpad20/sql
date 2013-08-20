@@ -5,12 +5,13 @@
 #include "create.h"
 
 typedef struct Insert_t {
-   RA *ra;
+   RA_t *ra;
    StrList_t *col_names;
    Literal_t *values;
 } Insert_t;
 
-Insert_t *Insert_make(RA *ra, StrList_t *opt_col_names, Literal_t *values);
+Insert_t *Insert_make(RA_t *ra, StrList_t *opt_col_names, Literal_t *values);
 void Insert_print(Insert_t *insert);
+void Insert_free(Insert_t *insert);
 
 #endif

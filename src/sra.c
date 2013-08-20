@@ -228,11 +228,11 @@ SRA_t *SRA_applyOption(SRA_t *sra, ProjectOption_t *option) {
    return sra;
 }
 
-void ProjectOption_delete(ProjectOption_t *opt) {
+void ProjectOption_free(ProjectOption_t *opt) {
    if (opt->group_by)
-      Expression_delete(opt->group_by);
+      Expression_free(opt->group_by);
    if (opt->order_by)
-      Expression_delete(opt->order_by);
+      Expression_free(opt->order_by);
    free(opt);
 }
 
@@ -262,12 +262,12 @@ ProjectOption_t *ProjectOption_combine(ProjectOption_t *op1,
    if (op2->group_by) {
       op1->group_by = op2->group_by;
       op2->group_by = NULL;
-      ProjectOption_delete(op2);
+      ProjectOption_free(op2);
       return op1;
    } else {
       op2->group_by = op1->group_by;
       op1->group_by = NULL;
-      ProjectOption_delete(op1);
+      ProjectOption_free(op1);
       return op2;
    }
 }
@@ -307,5 +307,79 @@ void ProjectOption_print(ProjectOption_t *op) {
    }
    if (!op->order_by && !op->group_by) {
       printf("Empty ProjectOption\n");
+   }
+}
+
+void JoinCondition_free(JoinCondition_t *cond) {
+   switch (cond->t) {
+      case JOIN_COND_ON:
+         Condition_free(cond->on);
+         break;
+      case JOIN_COND_USING:
+         StrList_free(cond->col_list);
+         break;
+   }
+}
+
+void SRA_free(SRA_t *sra) {
+   switch (sra->t) {
+      case SRA_TABLE: 
+         TableReference_free(sra->table.ref); 
+         break;
+      case SRA_PROJECT:
+         SRA_free(sra->project.sra);
+         Expression_freeList(sra->project.expr_list);
+         Expression_free(sra->project.order_by);
+         Expression_free(sra->project.group_by);
+         break;
+      case SRA_SELECT:
+         SRA_free(sra->select.sra);
+         Condition_free(sra->select.cond);
+         break;
+      case SRA_FULL_OUTER_JOIN:
+      case SRA_LEFT_OUTER_JOIN:
+      case SRA_RIGHT_OUTER_JOIN:
+      case SRA_JOIN:
+         SRA_free(sra->join.sra1);
+         SRA_free(sra->join.sra2);
+         if (sra->join.opt_cond)
+            JoinCondition_free(sra->join.opt_cond);
+         break;
+      case SRA_NATURAL_JOIN:
+      case SRA_UNION:
+      case SRA_EXCEPT:
+      case SRA_INTERSECT:
+         SRA_free(sra->binary.sra1);
+         SRA_free(sra->binary.sra2);
+         break;
+   }
+   free(sra);
+}
+
+RA_t *SRA_desugar(SRA_t *sra) {
+   RA_t *t1, *t2;
+   switch (sra->t) {
+      case SRA_TABLE:
+      case SRA_PROJECT:
+      case SRA_SELECT:
+      case SRA_NATURAL_JOIN:
+      case SRA_JOIN:
+      case SRA_FULL_OUTER_JOIN:
+      case SRA_LEFT_OUTER_JOIN:
+      case SRA_RIGHT_OUTER_JOIN:
+      case SRA_UNION:
+         return Union(SRA_desugar(sra->binary.sra1), 
+                      SRA_desugar(sra->binary.sra2));
+      case SRA_EXCEPT:
+         return Union(SRA_desugar(sra->binary.sra1), 
+                      SRA_desugar(sra->binary.sra2));
+      case SRA_INTERSECT:
+         t1 = SRA_desugar(sra->binary.sra1);
+         t2 = SRA_desugar(sra->binary.sra2);
+         return Difference(
+                  Union(t1, t2),
+                  Difference(
+                     Difference(t1, t2),
+                     Difference(t2, t1)));
    }
 }

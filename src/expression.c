@@ -92,13 +92,13 @@ static void Term_print(ExprTerm term) {
    }
 }
 
-static void Term_delete(ExprTerm term) {
+static void Term_free(ExprTerm term) {
    switch (term.t) {
       case TERM_ID:
          free(term.id);
          break;
       case TERM_LITERAL:
-         Literal_delete(term.val);
+         Literal_free(term.val);
          break;
       case TERM_NULL:
          break;
@@ -110,19 +110,19 @@ static void Term_delete(ExprTerm term) {
       case TERM_FUNC:
          switch (term.f.t) {
             case FUNC_AVG:
-               Expression_delete(term.f.expr);
+               Expression_free(term.f.expr);
                break;
             case FUNC_COUNT:
-               Expression_delete(term.f.expr);
+               Expression_free(term.f.expr);
                break;
             case FUNC_MAX:
-               Expression_delete(term.f.expr);
+               Expression_free(term.f.expr);
                break;
             case FUNC_MIN:
-               Expression_delete(term.f.expr);
+               Expression_free(term.f.expr);
                break;
             case FUNC_SUM:
-               Expression_delete(term.f.expr);
+               Expression_free(term.f.expr);
                break;
             default:
                printf("Can't delete unknown function\n");
@@ -235,33 +235,33 @@ Expression_t *add_alias(Expression_t *expr, const char *alias) {
    return expr;
 }
 
-void Expression_delete(Expression_t *expr) {
+void Expression_free(Expression_t *expr) {
    switch (expr->t) {
       case EXPR_CONCAT:
-         Expression_delete(expr->expr.binary.expr1);
-         Expression_delete(expr->expr.binary.expr2);
+         Expression_free(expr->expr.binary.expr1);
+         Expression_free(expr->expr.binary.expr2);
          break;
       case EXPR_PLUS:
-         Expression_delete(expr->expr.binary.expr1);
-         Expression_delete(expr->expr.binary.expr2);
+         Expression_free(expr->expr.binary.expr1);
+         Expression_free(expr->expr.binary.expr2);
          break;
       case EXPR_MINUS:
-         Expression_delete(expr->expr.binary.expr1);
-         Expression_delete(expr->expr.binary.expr2);
+         Expression_free(expr->expr.binary.expr1);
+         Expression_free(expr->expr.binary.expr2);
          break;
       case EXPR_MULTIPLY:
-         Expression_delete(expr->expr.binary.expr1);
-         Expression_delete(expr->expr.binary.expr2);
+         Expression_free(expr->expr.binary.expr1);
+         Expression_free(expr->expr.binary.expr2);
          break;
       case EXPR_DIVIDE:
-         Expression_delete(expr->expr.binary.expr1);
-         Expression_delete(expr->expr.binary.expr2);
+         Expression_free(expr->expr.binary.expr1);
+         Expression_free(expr->expr.binary.expr2);
          break;
       case EXPR_NEG:
-         Expression_delete(expr->expr.unary.expr);
+         Expression_free(expr->expr.unary.expr);
          break;
       case EXPR_TERM:
-         Term_delete(expr->expr.term);
+         Term_free(expr->expr.term);
          break;
       default:
          printf("Can't delete unknown expression type '%d')", expr->t);
@@ -270,7 +270,7 @@ void Expression_delete(Expression_t *expr) {
    free(expr);
 }
 
-void Expression_deleteList(Expression_t *expr) {
+void Expression_freeList(Expression_t *expr) {
 
 }
 

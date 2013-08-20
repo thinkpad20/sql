@@ -1,7 +1,7 @@
 #include "../include/insert.h"
 #include "../include/ra.h"
 
-Insert_t *Insert_make(RA *ra, StrList_t *opt_col_names, Literal_t *values) {
+Insert_t *Insert_make(RA_t *ra, StrList_t *opt_col_names, Literal_t *values) {
    Insert_t *new_insert = (Insert_t *)calloc(1, sizeof(Insert_t));
    new_insert->ra = ra;
    new_insert->col_names = opt_col_names;
@@ -62,4 +62,16 @@ void Insert_print(Insert_t *insert) {
       printf("]");
    }
    puts("");
+}
+
+
+void Insert_free(Insert_t *insert) {
+   if (!insert) {
+      fprintf(stderr, "Warning: Insert_free called on null pointer\n");
+      return;
+   }
+   RA_free(insert->ra);
+   StrList_free(insert->col_names);
+   Literal_free(insert->values);
+   free(insert);
 }

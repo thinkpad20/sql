@@ -16,7 +16,7 @@ data Expression_t = Term String
 
 */
 
-typedef struct Expression_t Expression_t;
+typedef struct Expression_s Expression_t;
 
 enum TermType {
    TERM_LITERAL,
@@ -27,16 +27,16 @@ enum TermType {
 };
 
 enum FuncType { 
-  FUNC_MAX, 
-  FUNC_MIN, 
-  FUNC_COUNT, 
-  FUNC_AVG, 
-  FUNC_SUM 
+   FUNC_MAX, 
+   FUNC_MIN, 
+   FUNC_COUNT, 
+   FUNC_AVG, 
+   FUNC_SUM 
 };
 
 typedef struct Func {
-  enum FuncType t;
-  Expression_t *expr;
+   enum FuncType t;
+   Expression_t *expr;
 } Func;
 
 typedef struct ExprTerm {
@@ -67,7 +67,7 @@ enum ExprType {
    EXPR_NEG
 };
 
-struct Expression_t {
+struct Expression_s {
    enum ExprType t;
    union {
       ExprTerm term;
@@ -75,7 +75,7 @@ struct Expression_t {
       ExprUnary unary;
    } expr;
    char *alias;
-   Expression_t *next;
+   struct Expression_s *next;
 };
 
 
@@ -98,7 +98,7 @@ Expression_t *add_alias(Expression_t *expr, const char *alias);
 void Expression_print(Expression_t *);
 void Expression_printList(Expression_t *);
 
-void Expression_delete(Expression_t *expr);
-void Expression_deleteList(Expression_t *);
+void Expression_free(Expression_t *expr);
+void Expression_freeList(Expression_t *);
 
 #endif

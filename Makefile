@@ -1,9 +1,10 @@
-DEPS = bin/vector.o bin/create.o bin/ra.o bin/literal.o bin/common.o \
-		 bin/insert.o bin/condition.o bin/expression.o bin/column.o bin/delete.o bin/sra.o
-OPTS = -Wall -ansi -pedantic
+DEPS = bin/list.o bin/create.o bin/ra.o bin/literal.o bin/common.o \
+		 bin/insert.o bin/condition.o bin/expression.o bin/column.o \
+		 bin/delete.o bin/sra.o bin/vector.o bin/mock_db.o
+OPTS = -Wall
 
-all: bin/sql_parser
-	@echo "Finished! Run ./parsesql.sh <filename> to run the parser."
+all: init bin/sql_parser
+	@echo "Finished building!"
 
 src/lex.yy.c: src/lex/sql.l 
 	$(LEX) -i src/lex/sql.l
@@ -15,6 +16,12 @@ src/y.tab.c: src/yacc/sql.y
 	@mv y.tab.h src
 	@mkdir -p src/auxfiles
 	@mv y.output src/auxfiles
+
+bin/list.o: src/list.c
+	$(CC) $(OPTS) -c src/list.c -o bin/list.o
+
+bin/mock_db.o: src/mock_db.c
+	$(CC) $(OPTS) -c src/mock_db.c -o bin/mock_db.o
 
 bin/vector.o: src/vector.c
 	$(CC) $(OPTS) -c src/vector.c -o bin/vector.o
@@ -49,8 +56,9 @@ bin/expression.o: src/expression.c
 bin/column.o: src/column.c
 	$(CC) $(OPTS) -c src/column.c -o bin/column.o
 
-deps: bin/vector.o bin/create.o bin/ra.o bin/literal.o bin/common.o \
-		bin/insert.o bin/condition.o bin/expression.o bin/column.o bin/delete.o bin/sra.o
+deps: bin/list.o bin/vector.o bin/create.o bin/ra.o bin/literal.o \
+		bin/common.o bin/insert.o bin/condition.o bin/expression.o \
+		bin/column.o bin/delete.o bin/sra.o bin/mock_db.o
 
 bin/sql_parser: src/y.tab.c src/lex.yy.c deps
 	@mkdir -p bin
@@ -72,6 +80,9 @@ createtest: all
 
 errortest: all
 	@bin/sql_parser tests/errortest.sql
+
+init:
+	@mkdir -p bin
 
 cleanup:
 	-rm test.tab.cacc

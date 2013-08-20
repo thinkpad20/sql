@@ -67,7 +67,7 @@ size_t Column_getSize(Column_t *col);
 
 void Constraint_print(void *constraint);
 void Constraint_printList(Constraint_t *constraints);
-void Column_deleteList(Column_t *column);
+void Column_freeList(Column_t *column);
 
 /* sets the size of the next column */
 void Column_setSize(ssize_t size);

@@ -12,6 +12,7 @@
 #include "../include/condition.h"
 #include "../include/expression.h"
 #include "../include/delete.h"
+#include "../include/mock_db.h"
 
 #define YYERROR_VERBOSE
 
@@ -100,7 +101,7 @@ sql_query
 	;
 
 sql_line
-	: create 		{ Create_print($1); }
+	: create 		{ /*Create_print($1);*/ }
 	| select 		{ SRA_print($1); puts(""); }
 	| insert_into 	{ Insert_print($1); }
 	| delete_from 	{ Delete_print($1); }
@@ -126,7 +127,7 @@ opt_unique
 	;
 
 index_name
-	: IDENTIFIER { $$ = $1; }
+	: IDENTIFIER
 	;
 
 create_table
@@ -138,14 +139,14 @@ create_table
 	;
 
 column_dec_list
-	: column_dec { $$ = $1; }
+	: column_dec
 	| column_dec_list ',' column_dec { $$ = Column_append($1, $3); }
 	;
 
 column_dec
 	: column_name column_type opt_constraints 
 		{ 
-			/* printf("column '%s' (%d)\n", $1, $2); */
+			/*printf("column '%s' (%d)\n", $1, $2);*/
 			$$ = Column($1, $2, $3);
 		}
 	;
@@ -173,7 +174,7 @@ opt_key_dec_list
 	;
 
 key_dec_list
-	: key_dec { $$ = $1; }
+	: key_dec
 	| key_dec_list ',' key_dec { $$ = KeyDec_append($1, $3); }
 	;
 
@@ -189,7 +190,7 @@ references_stmt
 	;
 
 opt_constraints
-	: constraints { $$ = $1; }
+	: constraints
 	| /* empty */ { $$ = NULL; }
 	;
 
@@ -217,7 +218,7 @@ constraint
 	;
 
 select
-	: select_statement { $$ = $1; }
+	: select_statement
 	| select select_combo select_statement 
 		{ 
 			$$ = ($2 == UNION) ? SRAUnion($1, $3) :
@@ -364,7 +365,7 @@ column_reference
 
 opt_alias
 	: AS IDENTIFIER { $$ = $2; }
-	| IDENTIFIER { $$ = $1; }
+	| IDENTIFIER
 	| /* empty */ { $$ = NULL; }
 	;
 
@@ -378,15 +379,15 @@ function_name
 
 column_name_or_star
 	: '*' { $$ = strdup("*"); }
-	| column_name { $$ = $1; }
+	| column_name
 	;
 
 column_name
-	: IDENTIFIER { $$ = $1; }
+	: IDENTIFIER
 	;
 
 table_name
-	: IDENTIFIER { $$ = $1; }
+	: IDENTIFIER
 	;
 
 table
@@ -414,7 +415,7 @@ table
 	;
 
 opt_join_condition
-	: join_condition { $$ = $1; }
+	: join_condition
 	| /* empty */	  { $$ = NULL; }
 	;
 
@@ -461,7 +462,7 @@ column_names_list
 	;
 
 values_list
-	: literal_value { $$ = $1; }
+	: literal_value
 	| values_list ',' literal_value 
 		{ 
 			$$ = Literal_append($1, $3); 
@@ -494,9 +495,13 @@ void yyerror(const char *s) {
 	fprintf(stderr, "%s (line %d)\n", s, yylineno);
 }
 
+List_t *tables = NULL;
+
 int main(int argc, char **argv) {
 	int i;
-	puts("Welcome to the chiSQL parser :)");
+	puts("Welcome to chiSQL! :)");
+	puts("calling init");
+	mock_db_init();
 	for (i=1; i<argc; ++i) {
 		FILE *fp = fopen(argv[i], "r");
 		if (fp) {
@@ -513,6 +518,8 @@ int main(int argc, char **argv) {
          perror(buf);
 		}
 	}
-	puts("Thanks for using the chiSQL parser :)\n");
+	puts("We have the following tables:");
+	show_tables();
+	puts("Thanks for using chiSQL :)\n");
 	return 0;
 }

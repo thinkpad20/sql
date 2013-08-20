@@ -22,8 +22,8 @@ Literal_t *litChar(char c);
 Literal_t *litText(char *str);
 Literal_t *Literal_append(Literal_t *val, Literal_t *toAppend);
 
-void Literal_delete(Literal_t *lval);
-void Literal_deleteList(Literal_t *lval);
+void Literal_free(Literal_t *lval);
+void Literal_freeList(Literal_t *lval);
 
 void Literal_print(Literal_t *val);
 void Literal_printList(Literal_t *val);

@@ -7,49 +7,52 @@
 #include <string.h>
 #include <pthread.h>
 
-typedef struct listnode {
-    void *data;
-    struct listnode *next, *prev;
-} ListNode;
+typedef struct ListNode_s {
+   void *data;
+   struct ListNode_s *next, *prev;
+} ListNode_t;
 
-typedef struct List {
-    size_t size;
-    ListNode *front, *back;
-    void (*del) (void *);
-    pthread_mutex_t lock;
-    char *(*toString) (void *);
-    int (*compare)(void *, void *);
-    const char *name;
-} List;
+typedef struct List_s {
+   size_t size;
+   ListNode_t *front, *back;
+   void (*del) (void *);
+   pthread_mutex_t lock;
+   char *(*toString) (void *);
+   int (*compare)(void *, void *);
+   void (*print) (void *);
+   const char *name;
+} List_t;
 
 
-void list_init(struct List *, void (*del) (void *));
-List *list_initWith(void *elem);
-List *list_initWithN(size_t n, ...);
-void list_destroy(struct List *l);
+void list_init(List_t *, void (*del) (void *));
+List_t *list_initWith(void *elem);
+List_t *list_initWithN(size_t n, ...);
+void list_destroy(List_t *l);
 
-void *list_findByInt(struct List *l, int (*toInt) (void *), int i);
-void *list_findByString(struct List *l, void (*toString) (char *,void *), const char *str);
-void *list_findByPointer(struct List *l, void *ptr);
+void list_setPrintFunc(List_t *l, void (*print) (void *));
 
-bool list_removeByInt(struct List *l, int (*toInt) (void *), int i);
-bool list_removeByString(struct List *l, void (*toString) (char *,void *), const char *str);
-void *list_removeByPointer(struct List *list, void *ptr);
-void *list_removeNode(struct List *list, struct listnode *node);
-void list_removeNodeDelete(struct List *list, struct listnode *node);
-void list_removeByPointerFree(List *list, void *ptr);
+void *list_findByInt(List_t *l, int (*toInt) (void *), int i);
+void *list_findByString(List_t *l, void (*toString) (char *,void *), const char *str);
+void *list_findByPointer(List_t *l, void *ptr);
 
-void list_print(struct List *l);
-void list_printCustom(struct List *l, char * (*toString) (void *), bool freeAfter);
+bool list_removeByInt(List_t *l, int (*toInt) (void *), int i);
+bool list_removeByString(List_t *l, void (*toString) (char *,void *), const char *str);
+void *list_removeByPointer(List_t *list, void *ptr);
+void *list_removeNode(List_t *list, ListNode_t *node);
+void list_removeNodeDelete(List_t *list, ListNode_t *node);
+void list_removeByPointerFree(List_t *list, void *ptr);
 
-ListNode *listNode_init(void *data, ListNode *next, ListNode *prev);
+void list_print(List_t *l, bool verbose);
+void list_printCustom(List_t *l, char * (*toString) (void *), bool freeAfter);
+
+ListNode_t *listNode_init(void *data, ListNode_t *next, ListNode_t *prev);
 
 /* Threadsafe */
-bool list_addBack(struct List *l, void *data);
-void *list_removeBack(struct List *l);
-bool list_addFront(struct List *l, void *data);
-bool list_addInOrder(struct List *l, void *data);
-void *list_removeFront(struct List *l);
-void list_addBetween(List *list, void *data, ListNode *prev, ListNode *next);
+bool list_addBack(List_t *l, void *data);
+void *list_removeBack(List_t *l);
+bool list_addFront(List_t *l, void *data);
+bool list_addInOrder(List_t *l, void *data);
+void *list_removeFront(List_t *l);
+void list_addBetween(List_t *list, void *data, ListNode_t *prev, ListNode_t *next);
 
 #endif

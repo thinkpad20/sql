@@ -5,6 +5,7 @@
 #include "expression.h"
 #include "create.h"
 #include "condition.h"
+#include "ra.h"
 
 /*
 SQL:
@@ -95,11 +96,6 @@ typedef struct SRA_Join_s {
    JoinCondition_t *opt_cond;
 } SRA_Join_t;
 
-typedef struct SRA_OuterJoin_s {
-   SRA_t *sra1, *sra2;
-   JoinCondition_t *opt_cond;
-} SRA_OuterJoin_t;
-
 typedef struct SRA_Binary_s {
    SRA_t *sra1, *sra2;
 } SRA_Binary_t;
@@ -111,7 +107,6 @@ struct SRA_s {
       SRA_Project_t project;
       SRA_Select_t select;
       SRA_Join_t join;
-      SRA_OuterJoin_t ojoin;
       SRA_Binary_t binary;
    };
 };
@@ -163,9 +158,12 @@ void ProjectOption_print(ProjectOption_t *sra);
 JoinCondition_t *On(Condition_t *cond);
 JoinCondition_t *Using(StrList_t *col_list);
 
+void SRA_free(SRA_t *sra);
+
 void SRA_print(SRA_t *sra);
 void JoinCondition_print(JoinCondition_t *cond);
+void JoinCondition_free(JoinCondition_t *cond);
 
-RA *desugar(SRA_t *sra);
+RA_t *SRA_desugar(SRA_t *sra);
 
 #endif

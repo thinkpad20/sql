@@ -64,7 +64,7 @@ Condition_t *Or(Condition_t *cond1, Condition_t *cond2);
 Condition_t *Not(Condition_t *cond);
 Condition_t *In(Expression_t *expr, Literal_t *values_list);
 
-void Condition_delete(Condition_t *cond);
+void Condition_free(Condition_t *cond);
 void Condition_print(Condition_t *cond);
 
 #endif

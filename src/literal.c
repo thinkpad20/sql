@@ -70,13 +70,13 @@ Literal_t *Literal_append(Literal_t *lit1, Literal_t *lit2) {
    return Literal_app(lit1, Literal_append(lit1->next, lit2));
 }
 
-void Literal_delete(Literal_t *lval) {
+void Literal_free(Literal_t *lval) {
    if (lval->t == TYPE_TEXT)
       free(lval->val.strval);
    free(lval);
 }
 
-void Literal_deleteList(Literal_t *lval) {
+void Literal_freeList(Literal_t *lval) {
    Literal_t *temp;
    while (lval) {
       temp = lval;

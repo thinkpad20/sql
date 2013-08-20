@@ -1,7 +1,6 @@
 #include "../include/create.h"
 #include "../include/ra.h"
 
-vector_t *tables = NULL;
 static Table_t *Table_addPrimaryKey(Table_t *table, const char *col_name);
 
 Table_t *Table_addForeignKey(Table_t *table, ForeignKeyRef_t fkr) {
@@ -87,10 +86,23 @@ Table_t *Table_addPrimaryKeys(Table_t *table, vector_t *col_names) {
    return table;
 }
 
-void Table_delete(Table_t *table) {
-   Column_deleteList(table->columns);
+void Table_free(void *table_vptr) {
+   Table_t *table = (Table_t *)table_vptr;
+   Column_freeList(table->columns);
    free(table->name);
    free(table);
+}
+
+void TableReference_free(TableReference_t *tref) {
+   if (!tref) {
+      fprintf(stderr, "Warning: TableReference_free called on null pointer\n");
+      return;
+   }
+   free(tref->table_name);
+   /* alias is optional */
+   if (tref->alias) 
+      free(tref->alias);
+   free(tref);
 }
 
 void Table_print(Table_t *table) {
@@ -105,13 +117,6 @@ void Table_print(Table_t *table) {
       if (++count == 10) break;
    }
    printf("\n)\n");
-}
-
-void add_table(Table_t *table) {
-   if (tables == NULL) 
-      tables = vector_withData(1, table);
-   else
-      tables = vector_push(tables, table);
 }
 
 KeyDec_t *KeyDec_append(KeyDec_t *decs, KeyDec_t *dec) {
@@ -147,7 +152,7 @@ void Index_print(Index_t *idx) {
    puts("");
 }
 
-void Index_delete(Index_t *idx) {
+void Index_free(Index_t *idx) {
    free(idx->name);
    free(idx->column_name);
    free(idx->table_name);
@@ -174,10 +179,10 @@ void Create_print(Create_t *cre) {
    else
       Index_print(cre->index);
 }
-void Create_delete(Create_t *cre) {
+void Create_free(Create_t *cre) {
    if (cre->t == CREATE_TABLE)
-      Table_delete(cre->table);
+      Table_free(cre->table);
    else
-      Index_delete(cre->index);
+      Index_free(cre->index);
    free(cre);
 }

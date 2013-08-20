@@ -86,6 +86,23 @@ void vector_printStrings(vector_t *vector) {
    printf("]\n");
 }
 
+void vector_clear(vector_t *vector) {
+   size_t i;
+   if (!vector) return;
+   for (i = 0; i < vector->size; ++i) {
+      if (vector->data[i] && vector->free) {
+         vector->free(vector->data[i]);
+      }
+   }
+   vector->size = 0;
+   vector->max_size = 0;
+}
+
+void vector_setDeleteFunc(vector_t *vector, void (*free) (void *)) {
+   if (vector)
+      vector->free = free;
+}
+
 int word_count = 0;
 
 char *random_str() {

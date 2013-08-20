@@ -36,6 +36,14 @@ void StrList_print(StrList_t *list) {
    printf("]");
 }
 
+void StrList_free(StrList_t *list) {
+   while (list) {
+      StrList_t *next = list->next;
+      free(list);
+      list = next;
+   }
+}
+
 int ind = 0;
 
 void upInd() {
@@ -85,6 +93,43 @@ StrList_t *StrList_make(char *str) {
    StrList_t *list = (StrList_t *)calloc(1, sizeof(StrList_t));
    list->str = str;
    return list;
+}
+
+/* just so we declare them */
+void SRA_free(struct SRA_s *);
+void Table_free(struct Table_s *);
+void Index_free(struct Index_s *);
+void Insert_free(struct Insert_s *);
+void Delete_free(struct Delete_s *);
+
+void Query_free(Query_t *query) {
+   switch (query->t) {
+      case SELECT_Q: SRA_free(query->sra); return;
+      case CREATE_T_Q: Table_free(query->table); return;
+      case CREATE_I_Q: Index_free(query->index); return;
+      case INSERT_Q: Insert_free(query->insert); return;
+      case DELETE_Q: Delete_free(query->del); return;
+   }
+}
+
+Query_t *Query_fromSRA(struct SRA_s *sra) {
+   return NULL;
+}
+
+Query_t *Query_fromTable(struct Table_s *table) {
+   return NULL;
+}
+
+Query_t *Query_fromIndex(struct Index_s *index) {
+   return NULL;
+}
+
+Query_t *Query_fromInsert(struct Insert_s *insert) {
+   return NULL;
+}
+
+Query_t *Query_fromDelete(struct Delete_s *del) {
+   return NULL;
 }
 
 /*#define COMMON_TEST*/

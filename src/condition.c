@@ -130,7 +130,7 @@ Condition_t *In(Expression_t *expr, Literal_t *values_list) {
    return new_cond;   
 }
 
-void Condition_delete(Condition_t *cond) {
+void Condition_free(Condition_t *cond) {
    switch (cond->t) {
       case RA_COND_EQ:
       case RA_COND_LEQ:
@@ -142,15 +142,15 @@ void Condition_delete(Condition_t *cond) {
          break;
       case RA_COND_AND:
       case RA_COND_OR:
-         Condition_delete(cond->cond.binary.cond1);
-         Condition_delete(cond->cond.binary.cond2);
+         Condition_free(cond->cond.binary.cond1);
+         Condition_free(cond->cond.binary.cond2);
          break;
       case RA_COND_NOT:
-         Condition_delete(cond->cond.unary.cond);
+         Condition_free(cond->cond.unary.cond);
          break;
       case RA_COND_IN:
-         Literal_deleteList(cond->cond.in.values_list);
-         Expression_deleteList(cond->cond.in.expr);
+         Literal_freeList(cond->cond.in.values_list);
+         Expression_freeList(cond->cond.in.expr);
          break;
    }
    free(cond);

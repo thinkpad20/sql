@@ -60,10 +60,10 @@ static void deleteConstraint_ts(Constraint_t *constraint) {
       Constraint_t *next = constraint->next;
       switch (constraint->t) {
          case CONS_DEFAULT:
-            Literal_delete(constraint->constraint.default_val);
+            Literal_free(constraint->constraint.default_val);
             break;
          case CONS_CHECK:
-            Condition_delete(constraint->constraint.check);
+            Condition_free(constraint->constraint.check);
             break;
          default:
             break;
@@ -72,13 +72,13 @@ static void deleteConstraint_ts(Constraint_t *constraint) {
    }
 }
 
-void Column_deleteList(Column_t *column) {
+void Column_freeList(Column_t *column) {
    if (column) {
       Column_t *next = column->next;
       free(column->name);
       deleteConstraint_ts(column->constraints);
       free(column);
-      Column_deleteList(next);
+      Column_freeList(next);
    }
 }
 
