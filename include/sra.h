@@ -6,6 +6,7 @@
 #include "create.h"
 #include "condition.h"
 #include "ra.h"
+#include "mock_db.h"
 
 /*
 SQL:

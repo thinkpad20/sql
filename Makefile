@@ -64,7 +64,7 @@ bin/sql_parser: src/y.tab.c src/lex.yy.c deps
 	@mkdir -p bin
 	$(CC) $(OPTS) -o bin/sql_parser src/y.tab.c src/lex.yy.c $(DEPS) -ly -ll
 
-test: selecttest inserttest deletetest createtest errortest
+tests: selecttest inserttest deletetest createtest errortest
 
 selecttest: all
 	@bin/sql_parser tests/selecttest.sql
@@ -80,6 +80,9 @@ createtest: all
 
 errortest: all
 	@bin/sql_parser tests/errortest.sql
+
+createselecttest: all
+	@bin/sql_parser tests/createselecttest.sql
 
 init:
 	@mkdir -p bin

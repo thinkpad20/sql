@@ -520,6 +520,9 @@ int main(int argc, char **argv) {
 	}
 	puts("We have the following tables:");
 	show_tables();
+	List_t cols = columns_in_common("Foo", "Bar");
+	printf("tables Foo and Bar have %lu cols in common\n", cols.size);
+
 	puts("Thanks for using chiSQL :)\n");
 	return 0;
 }

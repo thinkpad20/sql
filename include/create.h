@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "column.h"
+#include "list.h"
 
 typedef struct Table_s {
    char *name;
