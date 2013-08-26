@@ -23,7 +23,6 @@ typedef struct List_s {
    const char *name;
 } List_t;
 
-
 void list_init(List_t *, void (*del) (void *));
 List_t *list_initWith(void *elem);
 List_t *list_initWithN(size_t n, ...);
@@ -44,6 +43,15 @@ void list_removeByPointerFree(List_t *list, void *ptr);
 
 void list_print(List_t *l, bool verbose);
 void list_printCustom(List_t *l, char * (*toString) (void *), bool freeAfter);
+
+/* removes all elements for which pred returns false. Does not free data. */
+void list_filter(List_t *l, bool (*pred) (void *));
+/* same as above, but frees data. */
+void list_filterDelete(List_t *l, bool (*pred) (void *));
+/* replaces all elements e in l with f(e). Does not free original. */
+void list_map(List_t *l, void *(*f) (void *));
+/* same as above, but frees original. */
+void list_mapDelete(List_t *l, void *(*f) (void *));
 
 ListNode_t *listNode_init(void *data, ListNode_t *next, ListNode_t *prev);
 

@@ -447,7 +447,7 @@ opt_outer
 insert_into
 	: INSERT INTO table_name opt_column_names VALUES '(' values_list ')'
 		{
-			$$ = Insert_make(Table($3), $4, $7);
+			$$ = Insert_make(RA_Table($3), $4, $7);
 		}
 	;
 
@@ -520,8 +520,10 @@ int main(int argc, char **argv) {
 	}
 	puts("We have the following tables:");
 	show_tables();
-	List_t cols = columns_in_common("Foo", "Bar");
-	printf("tables Foo and Bar have %lu cols in common\n", cols.size);
+	List_t cols = columns_in_common_str("Foo", "Bar");
+	printf("tables Foo and Bar have %lu %s in common\n", 
+														cols.size, 
+														cols.size > 1 ? "cols" : "col");
 
 	puts("Thanks for using chiSQL :)\n");
 	return 0;

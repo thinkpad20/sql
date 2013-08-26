@@ -294,3 +294,43 @@ void list_removeByPointerFree(List_t *list, void *ptr) {
 void list_setPrintFunc(List_t *l, void (*print) (void *)) {
    l->print = print;
 }
+
+void list_filter(List_t *l, bool (*pred) (void *)) {
+   ListNode_t *node = l->front;
+   while (node) {
+      ListNode_t *next = node->next;
+      if (!pred(node->data)) {
+         list_removeNode(l, node);
+      }
+      node = next;
+   }
+}
+
+void list_filterDelete(List_t *l, bool (*pred) (void *)) {
+   ListNode_t *node = l->front;
+   while (node) {
+      ListNode_t *next = node->next;
+      if (!pred(node->data)) {
+         list_removeNodeDelete(l, node);
+      }
+      node = next;
+   }
+}
+
+void list_map(List_t *l, void *(*f) (void *)) {
+   ListNode_t *node = l->front;
+   while (node) {
+      node->data = f(node->data);
+      node = node->next;
+   }
+}
+
+void list_mapDelete(List_t *l, void *(*f) (void *)) {
+   ListNode_t *node = l->front;
+   while (node) {
+      void *tmp = node->data;
+      node->data = f(node->data);
+      if (l->del) l->del(tmp);
+      node = node->next;
+   }
+}

@@ -356,30 +356,147 @@ void SRA_free(SRA_t *sra) {
    free(sra);
 }
 
+static RA_t *desugar_table(SRA_t *sra) {
+   /* 
+   an SRA table contains a TableReference_t, which can optionally 
+   have an alias. If there's no alias, we can simply generate
+   an RA table with that name; otherwise, we'll apply a Rho operator
+   to change its name.
+   */
+   if (!sra->table.ref->alias) {
+      return RA_Table(sra->table.ref->table_name);
+   } else {
+      return
+         RA_RhoTable(
+            RA_Table(sra->table.ref->table_name),
+            sra->table.ref->alias
+         );
+   }
+}
+
+static RA_t *desugar_project(SRA_t *sra) {
+   /*
+   SRA project will have a list of expressions and a table to 
+   take them from, along with some things like order by,
+   group by etc. We'll be ignoring all of these for now, as our
+   RA machinery as-is doesn't support it. But it can be modified later.
+   */
+   return RA_Pi(SRA_desugar(sra->project.sra), sra->project.expr_list);
+}
+
+static RA_t *desugar_select(SRA_t *sra) {
+   /*
+   This conversion is straightforward, since the structure is identical.
+   */
+   return RA_Sigma(SRA_desugar(sra->select.sra), sra->select.cond);
+}
+
+static RA_t *desugar_natural_join(SRA_t *sra) {
+   /*
+   The natural join means joining on the condition that for all columns which
+   have the same name, their values must also be equal.
+   Consider tables t1, t2, with column sets cs1, cs2. 
+   Then let cs = cs1 intersect cs2, so cs is the set of columns they have in
+   common.
+   Then for every column c in cs, we want to make a condition: t1.c = t2.c.
+   We apply this condition to the cross product of t1 and t2.
+   Further, any pair of shared columns will be collapsed into one.
+   Pseudocode:
+      // start with cross product
+      res = Cross(t1, t2)
+
+      // find distinct and shared columns
+      distinct1 = list of columns from t1 that are not in t2
+      distinct2 = list of columns from t2 that are not in t1
+      shared = list of columns that are shared
+
+      // initial condition
+      cond = Eq("t1." + shared[0], "t2." + shared[0])
+      // all remaining columns ANDed on
+      for i == 1 .. shared.length:
+         cond = And(cond, Eq(t1.shared[i], t2.shared[i]))
+      // update result with conditions
+      res = Sigma(res, cond)
+
+      // build columns to project
+      to_project = []
+      for col in distinct1:
+         to_project += Term(col)
+      for col in shared:
+         to_project += Term(col)
+      for col in distinct2:
+         to_project += Term(col)
+   */
+   // /* start with cross product */
+   // RA_t *res = RA_Cross(SRA_desugar(sra->binary.sra1), 
+   //                      SRA_desugar(sra->binary.sra2));
+   // /* get t1\t2, t2\t1, t1 intersect t2 */
+   // List_t distinct1 = columns_except(sra->binary.sra1->cols,
+   //                                   sra->binary.sra2->cols);
+   // List_t distinct2 = columns_except(sra->binary.sra2->cols,
+   //                                   sra->binary.sra1->cols);
+   // List_t shared = columns_intersect(sra->binary.sra1->cols,
+   //                                   sra->binary.sra2->cols);
+   // /* for later use in choosing which columns to project */
+   // List_t to_project;
+   // /* create a condition that shared columns have equal values */
+   // Condition_t *cond = NULL;
+   // int first = 1; /* see below for purpose */
+   // while (shared.size > 0) {
+   //    Column_t *shared_col = (Column_t *)list_removeFront(&shared);
+   //    if (first) {
+   //       cond = Eq(Term(shared_col->name)
+   //    }
+   // }
+      return NULL;
+}
+
 RA_t *SRA_desugar(SRA_t *sra) {
-   RA_t *t1, *t2;
+   RA_t *t1, *t2, *res;
    switch (sra->t) {
       case SRA_TABLE:
+         res = desugar_table(sra); break;
       case SRA_PROJECT:
+         res = desugar_project(sra); break;
       case SRA_SELECT:
+         res = desugar_select(sra); break;
       case SRA_NATURAL_JOIN:
+         res = desugar_natural_join(sra); break;
       case SRA_JOIN:
+         res = desugar_join(sra); break;
       case SRA_FULL_OUTER_JOIN:
+         res = desugar_join(sra); break;
       case SRA_LEFT_OUTER_JOIN:
+         res = desugar_join(sra); break;
       case SRA_RIGHT_OUTER_JOIN:
+         res = desugar_join(sra); break;
       case SRA_UNION:
-         return Union(SRA_desugar(sra->binary.sra1), 
+         return RA_Union(SRA_desugar(sra->binary.sra1), 
                       SRA_desugar(sra->binary.sra2));
       case SRA_EXCEPT:
-         return Union(SRA_desugar(sra->binary.sra1), 
+         return RA_Union(SRA_desugar(sra->binary.sra1), 
                       SRA_desugar(sra->binary.sra2));
       case SRA_INTERSECT:
          t1 = SRA_desugar(sra->binary.sra1);
          t2 = SRA_desugar(sra->binary.sra2);
-         return Difference(
-                  Union(t1, t2),
-                  Difference(
-                     Difference(t1, t2),
-                     Difference(t2, t1)));
+         return RA_Difference(
+                  RA_Union(t1, t2),
+                  RA_Difference(
+                     RA_Difference(t1, t2),
+                     RA_Difference(t2, t1)));
+      default:
+         fprintf(stderr, "Error: unhandled SRA type\n");
+         exit(1);
    }
+   SRA_free(sra);
+   return res;
 }
+/*
+RA_t *SRA_desugar(SRA_t *sra) {
+   List_t temp_tables;
+   RA_t *res;
+   list_init(&temp_tables, Table_free);
+   res = SRA_desugar_r(sra, temp_tables);
+   list_destroy(&temp_tables);
+   return res;
+}*/

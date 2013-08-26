@@ -52,7 +52,7 @@ void RA_print(RA_t *ra) {
          break;
       case RA_RHO_EXPR:
          indent_print("RhoExpr(");
-         Expression_print(ra->rho.expr_to_rename);
+         Expression_print(ra->rho.to_rename);
          printf(", \"%s\",", ra->rho.new_name);
          upInd();
          RA_print(ra->rho.ra);
@@ -61,10 +61,10 @@ void RA_print(RA_t *ra) {
          break;
       case RA_RHO_TABLE:
          indent_print("RhoTable(");
-         printf("%s, \"%s\",", ra->rho.table_name, ra->rho.new_name);
          upInd();
          RA_print(ra->rho.ra);
          downInd();
+         printf(", \"%s\"", ra->rho.new_name);
          indent_print(")");
          break;
       default:
@@ -72,14 +72,14 @@ void RA_print(RA_t *ra) {
    }
 }
 
-RA_t *Table (const char *name) {
+RA_t *RA_Table (const char *name) {
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_TABLE;
    new_ra->table.name = strdup(name);
    return new_ra;
 }
 
-RA_t *Sigma (RA_t *ra, Condition_t *cond) {
+RA_t *RA_Sigma (RA_t *ra, Condition_t *cond) {
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_SIGMA;
    new_ra->sigma.cond = cond;
@@ -87,7 +87,7 @@ RA_t *Sigma (RA_t *ra, Condition_t *cond) {
    return new_ra;
 }
 
-RA_t *Pi (RA_t *ra, Expression_t *expr_list) {
+RA_t *RA_Pi (RA_t *ra, Expression_t *expr_list) {
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_PI;
    new_ra->pi.ra = ra;
@@ -95,7 +95,7 @@ RA_t *Pi (RA_t *ra, Expression_t *expr_list) {
    return new_ra;
 }
 
-RA_t *Union (RA_t *ra1, RA_t *ra2) {
+RA_t *RA_Union (RA_t *ra1, RA_t *ra2) {
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_UNION;
    new_ra->binary.ra1 = ra1;
@@ -103,7 +103,7 @@ RA_t *Union (RA_t *ra1, RA_t *ra2) {
    return new_ra;
 }
 
-RA_t *Difference (RA_t *ra1, RA_t *ra2) {
+RA_t *RA_Difference (RA_t *ra1, RA_t *ra2) {
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_DIFFERENCE;
    new_ra->binary.ra1 = ra1;
@@ -111,7 +111,7 @@ RA_t *Difference (RA_t *ra1, RA_t *ra2) {
    return new_ra;
 }
 
-RA_t *Cross (RA_t *ra1, RA_t *ra2) {
+RA_t *RA_Cross (RA_t *ra1, RA_t *ra2) {
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_CROSS;
    new_ra->binary.ra1 = ra1;
@@ -119,18 +119,17 @@ RA_t *Cross (RA_t *ra1, RA_t *ra2) {
    return new_ra;
 }
 
-RA_t *RhoTable (RA_t *ra, const char *table_name, const char *new_name) {
+RA_t *RA_RhoTable (RA_t *ra, const char *new_name) {
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_RHO_TABLE;
-   new_ra->rho.table_name = strdup(table_name);
    new_ra->rho.new_name = strdup(new_name);
    return new_ra;
 }
 
-RA_t *RhoExpr (RA_t *ra, Expression_t *expr, const char *new_name) {
+RA_t *RA_RhoExpr (RA_t *ra, Expression_t *expr, const char *new_name) {
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_RHO_EXPR;
-   new_ra->rho.expr_to_rename = expr;
+   new_ra->rho.to_rename = expr;
    new_ra->rho.new_name = strdup(new_name);
    return new_ra;
 }
@@ -154,12 +153,11 @@ void RA_free(RA_t *ra) {
       case RA_RHO_EXPR:
          RA_free(ra->rho.ra);
          free(ra->rho.new_name);
-         Expression_free(ra->rho.expr_to_rename);
+         Expression_free(ra->rho.to_rename);
          break;
       case RA_RHO_TABLE:
          RA_free(ra->rho.ra);
          free(ra->rho.new_name);
-         free(ra->rho.table_name);
          break;
       case RA_TABLE:
          free(ra->table.name);

@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "condition.h"
+#include "list.h"
 
 /*
 RA_t in Haskell
@@ -14,30 +15,6 @@ data RA_t = Table String
         | Cross RA_t RA
         | Rename String [String] RA
 */
-
-typedef struct RA_Table_t {
-   char *name;
-} RA_Table_t;
-
-typedef struct RA_Sigma_t {
-   Condition_t *cond;
-   RA_t *ra;
-} RA_Sigma_t;
-
-typedef struct RA_Pi_t {
-   Expression_t *expr_list;
-   RA_t *ra;
-} RA_Pi_t;
-
-typedef struct RA_Binary {
-   RA_t *ra1, *ra2;
-} RA_Binary;
-
-typedef struct RA_Rho_t {
-   char *table_name, *new_name;
-   Expression_t *expr_to_rename;
-   RA_t *ra;
-} RA_Rho_t;
 
 enum RA_Type {
    RA_TABLE, 
@@ -53,23 +30,25 @@ enum RA_Type {
 struct RA_s {
    enum RA_Type t;
    union {
-      RA_Table_t table;
-      RA_Sigma_t sigma;
-      RA_Pi_t pi;
-      RA_Binary binary;
-      RA_Rho_t rho;
+      struct { char *name; } table;
+      struct { RA_t *ra; Condition_t *cond; } sigma;
+      struct { RA_t *ra; Expression_t *expr_list; } pi;
+      struct { RA_t *ra1, *ra2; } binary;
+      struct { RA_t *ra; Expression_t *to_rename; char *new_name;} rho;
    };
+   List_t columns;
 };
 
 void RA_print(RA_t *ra);
 
-RA_t *Table(const char *name);
-RA_t *Sigma(RA_t *ra, Condition_t *expr);
-RA_t *Pi(RA_t *ra, Expression_t *expr_list);
-RA_t *Union(RA_t *ra1, RA_t *ra2);
-RA_t *Difference(RA_t *ra1, RA_t *ra2);
-RA_t *Cross(RA_t *ra1, RA_t *ra2);
-RA_t *Rho(RA_t *ra, const char *table_name, unsigned num_col_names, ...);
+RA_t *RA_Table(const char *name);
+RA_t *RA_Sigma(RA_t *ra, Condition_t *expr);
+RA_t *RA_Pi(RA_t *ra, Expression_t *expr_list);
+RA_t *RA_Union(RA_t *ra1, RA_t *ra2);
+RA_t *RA_Difference(RA_t *ra1, RA_t *ra2);
+RA_t *RA_Cross(RA_t *ra1, RA_t *ra2);
+RA_t *RA_RhoTable(RA_t *ra, const char *new_name);
+RA_t *RA_RhoExpr(RA_t *ra, Expression_t *expr, const char *new_name);
 
 void RA_free(RA_t *ra);
 

@@ -75,7 +75,7 @@ enum OJType { OJ_LEFT, OJ_RIGHT, OJ_FULL };
 enum OrderBy {ORDER_BY_ASC, ORDER_BY_DESC};
 
 typedef struct SRA_Table_s {
-   TableReference_t *ref;
+   TableReference_t *ref; /* TableReference_t defined in create.h */
 } SRA_Table_t;
 
 typedef struct SRA_Project_s {

@@ -3,5 +3,5 @@ CREATE TABLE Foo (
 );
 
 CREATE TABLE Bar (
-   a int, b int, j char
+   a int, b int, j char, i int
 );
