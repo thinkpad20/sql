@@ -368,7 +368,7 @@ void list_sort(List_t *l) {
 }
 
 List_t list_union(List_t *l1, List_t *l2) {
-   if (!l1->copy || !l2->copy) {
+   if (!l1->copy || l1->copy != l2->copy) {
       fprintf(stderr, "Error: copy function not defined. Can't perform union\n");
       exit(1);
    }
@@ -381,8 +381,30 @@ List_t list_union(List_t *l1, List_t *l2) {
    } else if (l2->size == 0) {
       return list_deepCopy(l1);
    } else {
-      List_t res;
-      list_init(&res, l1->del ? l1->del : l2->del);
+      /* this isn't a very efficient algorithm, but it gets the job done. If 
+         you want something better, go write a hash table :)
+      */
+      List_t res = list_deepCopy(l1);
+      res.name = NULL; /* take away name, just in case */
+      ListNode_t *node;
+      /* scan through all of the nodes in second list and take any that 
+         aren't already in our result
+      */
+      for (node = l2->front; node; node = node->next) {
+         ListNode_t *node2;
+         bool found = false;
+         for (node2 = res.front; node2; node2 = node2->next) {
+            /* if compare == 0, we already have it */
+            if (!l2->compare(node->data, node2->data)) {
+               found = true;
+               break;
+            }
+         }
+         /* if we didn't find it, add it */
+         if (!found)
+            list_addBack(&res, l2->copy(node->data));
+      }
+      return res;
    }
 }
 
