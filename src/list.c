@@ -334,3 +334,76 @@ void list_mapDelete(List_t *l, void *(*f) (void *)) {
       node = node->next;
    }
 }
+
+void list_sort(List_t *l) {
+   if (!l->compare) {
+      fprintf(stderr, "Error: no compare function defined. Cannot sort.\n");
+      return;
+   }
+   if (!l->elem_size) {
+      fprintf(stderr, "Error: element size is not defined. Cannot sort.\n");
+      return;
+   }
+   if (l->size > 0) {
+      /* copy all elements into an array */
+      void **arr = calloc(l->size, sizeof(void *));
+      ListNode_t *node = l->front;
+      size_t idx = 0;
+      while (node) {
+         ListNode_t *next = node->next;
+         arr[idx++] = node->data;
+         list_removeNode(l, node); /* frees the node, not the data*/
+         node = next;
+      }
+
+      assert(l->size == 0 && "List is not empty for some reason");
+      /* use quicksort to sort the array */
+      qsort(arr, l->size, l->elem_size, l->compare);
+
+      /* copy the elements back */
+      for (idx = 0; idx < l->size; ++idx) {
+         list_addBack(l, arr[idx]);
+      }
+   }
+}
+
+List_t list_union(List_t *l1, List_t *l2) {
+   if (!l1->copy || !l2->copy) {
+      fprintf(stderr, "Error: copy function not defined. Can't perform union\n");
+      exit(1);
+   }
+   if (!l1->compare || (l1->compare != l2->compare)) {
+      fprintf(stderr, "Error: compare not defined, or not the same comparison"
+                      "function. Can't perform union\n");
+      exit(1);
+   } else if (l1->size == 0) {
+      return list_deepCopy(l2);
+   } else if (l2->size == 0) {
+      return list_deepCopy(l1);
+   } else {
+      List_t res;
+      list_init(&res, l1->del ? l1->del : l2->del);
+   }
+}
+
+List_t list_deepCopy(List_t *l) {
+   if (!l->copy) {
+      fprintf(stderr, "Error: no copy function defined. Can't deepCopy\n");
+      exit(1);
+   } else {
+      List_t res;
+      ListNode_t *node = l->front;
+      list_init(&res, l->del);
+      res.copy = l->copy;
+      res.toString = l->toString;
+      res.print = l->print;
+      res.elem_size = l->elem_size;
+      res.name = l->name;
+      while (node) {
+         list_addBack(&res, l->copy(node->data));
+         node = node->next;
+      }
+      assert(res.size == l->size && "Sizes don't match for some reason");
+      return res;
+   }
+}

@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <pthread.h>
+#include <assert.h>
 
 typedef struct ListNode_s {
    void *data;
@@ -18,8 +19,10 @@ typedef struct List_s {
    void (*del) (void *);
    pthread_mutex_t lock;
    char *(*toString) (void *);
-   int (*compare)(void *, void *);
+   int (*compare)(const void *, const void *);
    void (*print) (void *);
+   void *(*copy) (void *);
+   size_t elem_size;
    const char *name;
 } List_t;
 
@@ -29,6 +32,7 @@ List_t *list_initWithN(size_t n, ...);
 void list_destroy(List_t *l);
 
 void list_setPrintFunc(List_t *l, void (*print) (void *));
+void list_setCompFunc(List_t *l, int (*compare) (const void *, const void *));
 
 void *list_findByInt(List_t *l, int (*toInt) (void *), int i);
 void *list_findByString(List_t *l, void (*toString) (char *,void *), const char *str);
@@ -52,8 +56,14 @@ void list_filterDelete(List_t *l, bool (*pred) (void *));
 void list_map(List_t *l, void *(*f) (void *));
 /* same as above, but frees original. */
 void list_mapDelete(List_t *l, void *(*f) (void *));
+/* sorts based on provided compare function */
+void list_sort(List_t *l);
+/* performs a union of two lists using compare function */
+List_t list_union(List_t *l1, List_t *l2);
 
 ListNode_t *listNode_init(void *data, ListNode_t *next, ListNode_t *prev);
+
+List_t list_deepCopy(List_t *l);
 
 /* Threadsafe */
 bool list_addBack(List_t *l, void *data);
