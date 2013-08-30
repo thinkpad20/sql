@@ -43,6 +43,7 @@ List_t column_list(Table_t *table) {
    cols = table->columns;
    /*printf("constructing column list for table %s\n", table_name);*/
    list_init(&res, NULL);
+   list_setCompFunc(&res, Column_compareByName);
    while (cols) {
       /*printf("adding column '%s'\n", cols->name);*/
       list_addBack(&res, cols);

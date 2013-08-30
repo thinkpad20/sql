@@ -73,9 +73,15 @@ void RA_print(RA_t *ra) {
 }
 
 RA_t *RA_Table (const char *name) {
+   Table_t *tbl = table_by_name(name);
+   if (!tbl) {
+      fprintf(stderr, "Error: table '%s' does not exist in DB.\n", name);
+      return NULL;
+   }
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_TABLE;
    new_ra->table.name = strdup(name);
+   new_ra->columns = column_list(tbl);
    return new_ra;
 }
 
@@ -84,6 +90,7 @@ RA_t *RA_Sigma (RA_t *ra, Condition_t *cond) {
    new_ra->t = RA_SIGMA;
    new_ra->sigma.cond = cond;
    new_ra->sigma.ra = ra;
+   new_ra->columns = list_deepCopy(&ra->columns);
    return new_ra;
 }
 
@@ -92,6 +99,7 @@ RA_t *RA_Pi (RA_t *ra, Expression_t *expr_list) {
    new_ra->t = RA_PI;
    new_ra->pi.ra = ra;
    new_ra->pi.expr_list = expr_list;
+   new_ra->columns = list_deepCopy(&ra->columns);
    return new_ra;
 }
 
@@ -100,6 +108,7 @@ RA_t *RA_Union (RA_t *ra1, RA_t *ra2) {
    new_ra->t = RA_UNION;
    new_ra->binary.ra1 = ra1;
    new_ra->binary.ra2 = ra2;
+   new_ra->columns = list_union(&ra1->columns, &ra2->columns);
    return new_ra;
 }
 
@@ -108,6 +117,7 @@ RA_t *RA_Difference (RA_t *ra1, RA_t *ra2) {
    new_ra->t = RA_DIFFERENCE;
    new_ra->binary.ra1 = ra1;
    new_ra->binary.ra2 = ra2;
+   new_ra->columns = list_difference(&ra1->columns, &ra2->columns);
    return new_ra;
 }
 
@@ -116,6 +126,7 @@ RA_t *RA_Cross (RA_t *ra1, RA_t *ra2) {
    new_ra->t = RA_CROSS;
    new_ra->binary.ra1 = ra1;
    new_ra->binary.ra2 = ra2;
+   new_ra->columns = list_union(&ra1->columns, &ra2->columns);
    return new_ra;
 }
 
@@ -123,6 +134,7 @@ RA_t *RA_RhoTable (RA_t *ra, const char *new_name) {
    RA_t *new_ra = (RA_t *)calloc(1, sizeof(RA_t));
    new_ra->t = RA_RHO_TABLE;
    new_ra->rho.new_name = strdup(new_name);
+   new_ra->columns = list_deepCopy(&ra->columns);
    return new_ra;
 }
 
@@ -131,6 +143,7 @@ RA_t *RA_RhoExpr (RA_t *ra, Expression_t *expr, const char *new_name) {
    new_ra->t = RA_RHO_EXPR;
    new_ra->rho.to_rename = expr;
    new_ra->rho.new_name = strdup(new_name);
+   new_ra->columns = list_deepCopy(&ra->columns);
    return new_ra;
 }
 

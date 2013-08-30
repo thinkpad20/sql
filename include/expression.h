@@ -98,6 +98,8 @@ Expression_t *add_alias(Expression_t *expr, const char *alias);
 void Expression_print(Expression_t *);
 void Expression_printList(Expression_t *);
 
+char *Expression_toString(Expression_t *);
+
 void Expression_free(Expression_t *expr);
 void Expression_freeList(Expression_t *);
 

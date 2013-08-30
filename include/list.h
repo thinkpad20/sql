@@ -33,6 +33,7 @@ void list_destroy(List_t *l);
 
 void list_setPrintFunc(List_t *l, void (*print) (void *));
 void list_setCompFunc(List_t *l, int (*compare) (const void *, const void *));
+void list_setCopyFunc(List_t *l, void *(*copy)(void *));
 
 void *list_findByInt(List_t *l, int (*toInt) (void *), int i);
 void *list_findByString(List_t *l, void (*toString) (char *,void *), const char *str);
@@ -52,14 +53,20 @@ void list_printCustom(List_t *l, char * (*toString) (void *), bool freeAfter);
 void list_filter(List_t *l, bool (*pred) (void *));
 /* same as above, but frees data. */
 void list_filterDelete(List_t *l, bool (*pred) (void *));
+/* same as above, but makes a new list. */
+void list_filterNew(List_t *l, bool (*pred) (void *));
 /* replaces all elements e in l with f(e). Does not free original. */
 void list_map(List_t *l, void *(*f) (void *));
 /* same as above, but frees original. */
 void list_mapDelete(List_t *l, void *(*f) (void *));
-/* sorts based on provided compare function */
+/* same as above, but creates a new list */
+List_t list_mapNew(List_t *l, void *(*f) (void *));
+/* sorts; requires compare function to be defined */
 void list_sort(List_t *l);
 /* performs a union of two lists using compare function */
 List_t list_union(List_t *l1, List_t *l2);
+List_t list_difference(List_t *l1, List_t *l2);
+List_t list_intersection(List_t *l1, List_t *l2);
 
 ListNode_t *listNode_init(void *data, ListNode_t *next, ListNode_t *prev);
 

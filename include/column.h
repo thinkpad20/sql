@@ -62,6 +62,9 @@ Column_t *Column_append(Column_t *columns, Column_t *column);
 
 ColumnReference_t *ColumnReference_make(const char *, const char *);
 
+int Column_compareByName(const void *col1, const void *col2);
+void *Column_copy(void *col);
+
 void Column_getOffsets(Column_t *cols);
 size_t Column_getSize(Column_t *col);
 

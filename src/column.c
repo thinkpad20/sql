@@ -218,3 +218,15 @@ ColumnReference_t *ColumnReference_make(const char *tname, const char *cname) {
    if (cname) ref->columnName = strdup(cname);
    return ref;
 }
+
+int Column_compareByName(const void *c1, const void *c2) {
+   return strcmp(((Column_t *)c1)->name, ((Column_t *)c2)->name);
+}
+
+void *Column_copy(void *col) {
+   Column_t *copy = (Column_t *)malloc(sizeof(Column_t));
+   memcpy(copy, col, sizeof(Column_t));
+   copy->name = strdup(((Column_t *)col)->name);
+   copy->next = NULL; /* just in case */
+   return copy;
+}

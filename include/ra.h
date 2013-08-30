@@ -4,6 +4,8 @@
 #include "common.h"
 #include "condition.h"
 #include "list.h"
+#include "mock_db.h" /* later, change this to whatever header file 
+                        stores information about what tables you have */
 
 /*
 RA_t in Haskell
@@ -36,7 +38,8 @@ struct RA_s {
       struct { RA_t *ra1, *ra2; } binary;
       struct { RA_t *ra; Expression_t *to_rename; char *new_name;} rho;
    };
-   List_t columns;
+   List_t columns; /* if efficiency is desired, change this to
+                      a red-black tree */
 };
 
 void RA_print(RA_t *ra);

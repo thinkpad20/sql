@@ -317,6 +317,20 @@ void list_filterDelete(List_t *l, bool (*pred) (void *)) {
    }
 }
 
+void list_filterNew(List_t *l, bool (*pred) (void *)) {
+   List_t res;
+   ListNode_t *node;
+   memcpy(&res, l, sizeof(List_t)); /* for convenience */
+   res.size = 0; /* reset size and front/back pointers */
+   res.front = res.back = NULL;
+   assert(l->copy && "copy method must be defined");
+   for (node = l->front; node; node = node->next) {
+      if (pred(node->data)) {
+         list_addBack(&res, l->copy(node));
+      }
+   }
+}
+
 void list_map(List_t *l, void *(*f) (void *)) {
    ListNode_t *node = l->front;
    while (node) {
@@ -333,6 +347,18 @@ void list_mapDelete(List_t *l, void *(*f) (void *)) {
       if (l->del) l->del(tmp);
       node = node->next;
    }
+}
+
+List_t list_mapNew(List_t *l, void *(*f) (void *)) {
+   List_t res;
+   ListNode_t *node;
+   memcpy(&res, l, sizeof(List_t)); /* for convenience */
+   res.size = 0; /* reset size and front/back pointers */
+   res.front = res.back = NULL;
+   for (node = l->front; node; node = node->next) {
+      list_addBack(&res, f(node->data));
+   }
+   return res;
 }
 
 void list_sort(List_t *l) {
@@ -408,6 +434,70 @@ List_t list_union(List_t *l1, List_t *l2) {
    }
 }
 
+List_t list_intersection(List_t *l1, List_t *l2) {
+   if (!l1->copy || l1->copy != l2->copy) {
+      fprintf(stderr, "Error: copy function not defined. Can't "
+                      "perform intersection\n");
+      exit(1);
+   } else if (!l1->compare || (l1->compare != l2->compare)) {
+      fprintf(stderr, "Error: compare not defined, or not the same comparison "
+                      "function. Can't perform intersection\n");
+      exit(1);
+   } else if (l1->size == 0 || l2->size == 0) {
+      List_t res;
+      list_init(&res, l1->del);
+      return res;
+   } else {
+      List_t res;
+      ListNode_t *node;
+      list_init(&res, l1->del);
+      res.compare = l1->compare;
+      res.print = l1->print;
+      res.copy = l1->copy;
+      res.toString = l1->toString;
+      /* scan through all of the nodes in first list and take any that 
+         are also in second list. once again, not very efficient....
+      */
+      for (node = l1->front; node; node = node->next) {
+         ListNode_t *node2;
+         for (node2 = res.front; node2; node2 = node2->next) {
+            /* if compare == 0, it's a match so we add it */
+            if (!l2->compare(node->data, node2->data)) {
+               list_addBack(&res, l2->copy(node->data));
+            }
+         }
+      }
+      return res;
+   }
+}
+
+List_t list_difference(List_t *l1, List_t *l2) {
+   if (!l1->copy || l1->copy != l2->copy) {
+      fprintf(stderr, "Error: copy function not defined. Can't "
+                      "perform difference\n");
+      exit(1);
+   } else if (!l1->compare || (l1->compare != l2->compare)) {
+      fprintf(stderr, "Error: compare not defined, or not the same comparison "
+                      "function. Can't perform intersection\n");
+      exit(1);
+   } else {
+      /* copy the first list */
+      List_t res = list_deepCopy(l1);
+      ListNode_t *node;
+      /* find all of the pairs and remove them */
+      for (node = l1->front; node; node = node->next) {
+         ListNode_t *node2;
+         for (node2 = res.front; node2; node2 = node2->next) {
+            /* if compare == 0, it's a match so we remove it */
+            if (!l2->compare(node->data, node2->data)) {
+               list_removeNode(&res, node);
+            }
+         }
+      }
+      return res;
+   }
+}
+
 List_t list_deepCopy(List_t *l) {
    if (!l->copy) {
       fprintf(stderr, "Error: no copy function defined. Can't deepCopy\n");
@@ -428,4 +518,12 @@ List_t list_deepCopy(List_t *l) {
       assert(res.size == l->size && "Sizes don't match for some reason");
       return res;
    }
+}
+
+void list_setCopyFunc(List_t *l, void *(*copy)(void *)) {
+   l->copy = copy;
+}
+
+void list_setCompFunc(List_t *l, int (*comp)(const void *, const void *)) {
+   l->compare = comp;
 }

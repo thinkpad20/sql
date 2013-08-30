@@ -366,7 +366,7 @@ static RA_t *desugar_table(SRA_t *sra) {
    if (!sra->table.ref->alias) {
       return RA_Table(sra->table.ref->table_name);
    } else {
-      return
+      return 
          RA_RhoTable(
             RA_Table(sra->table.ref->table_name),
             sra->table.ref->alias
@@ -427,6 +427,7 @@ static RA_t *desugar_natural_join(SRA_t *sra) {
       for col in distinct2:
          to_project += Term(col)
    */
+
    // /* start with cross product */
    // RA_t *res = RA_Cross(SRA_desugar(sra->binary.sra1), 
    //                      SRA_desugar(sra->binary.sra2));
@@ -448,7 +449,11 @@ static RA_t *desugar_natural_join(SRA_t *sra) {
    //       cond = Eq(Term(shared_col->name)
    //    }
    // }
-      return NULL;
+   return NULL;
+}
+
+RA_t *desugar_join(SRA_t *sra) {
+   return NULL;
 }
 
 RA_t *SRA_desugar(SRA_t *sra) {

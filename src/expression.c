@@ -167,6 +167,27 @@ Expression_t *Neg(Expression_t *expr) {
    return new_expr;
 }
 
+enum TermType Expression_type(Expression_t *expr) {
+   enum TermType t1, t2;
+   switch (expr->t) {
+      case EXPR_TERM:
+         return expr->expr.term.t;
+      case EXPR_NEG:
+         return Expression_type(expr->expr.unary.expr);
+      default:
+         t1 = Expression_type(expr->expr.binary.expr1);
+         t2 = Expression_type(expr->expr.binary.expr2);
+         if (t1 != t2) {
+            fprintf(stderr, "Type mismatch on binary expression:\n");
+            Expression_print(expr->expr.binary.expr1);
+            fprintf(stderr, "\nis not the same type as\n");
+            Expression_print(expr->expr.binary.expr2);
+            exit(1);
+         }
+         return t1;
+   }  
+}
+
 void Expression_print(Expression_t *expr) {
    if (expr->t != EXPR_TERM) printf("(");
    switch (expr->t) {
