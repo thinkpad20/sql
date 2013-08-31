@@ -1,8 +1,11 @@
 module SRA where
 
+import qualified Data.Map as M
+
 data Type = Int | String deriving (Show, Eq)
 
 type Column = (String, Type)
+type TableMap = M.Map String [Column]
 type NamedExpr = (Expression, Maybe String)
 
 -- second string is optional table's name
@@ -67,3 +70,9 @@ instance Show Condition where
   show (Compare op e1 e2) = show e1 ++ op ++ show e2
   show (BinaryCond op c1 c2) = "(" ++ show c1 ++ op ++ show c2 ++ ")"
   show (Not c) = "not (" ++ show c ++ ")"
+
+tLookup :: String -> TableMap -> Maybe [Column]
+tLookup = M.lookup
+
+tFromList :: [(String,[Column])] -> TableMap
+tFromList = M.fromList

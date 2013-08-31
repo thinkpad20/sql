@@ -2,71 +2,26 @@ module Desugar where
 
 import SRA
 import Data.List
-import qualified Data.Map as M
-import Control.Monad (forM_)
 
-{------------------- Example queries/tables -------------------}
-tables :: M.Map String [(String, Type)]
-t = [("x", Int), ("y", Int)]
-u = [("x", Int), ("y", Int), ("z", Int)]
-tables = M.fromList [("t", t), ("u", u)]
-
-tblT = (TableName "t" Nothing)
-tblU = (TableName "u" Nothing)
--- select x, y from t;
-ex0 = Project [(Col "x" Nothing, Nothing), (Col "y" Nothing, Nothing)] tblT
-
--- select x, x + y as z from t;
-ex1 = Project [(Col "x" Nothing, Nothing), 
-                (Binary "+" (Col "x" Nothing) (Col "y" Nothing), Just "z")] 
-                  tblT
-
--- select z from (select x, x+y as z from t);
-ex2 = Project [(Col "z" Nothing, Nothing)] ex1
-
--- select x, z from (select x, x+y as z from t) where x = z;
-ex3 = Project [(Col "x" Nothing, Nothing), (Col "z" Nothing, Nothing)] $
-       Select (Compare "=" (Col "x" Nothing) (Col "z" Nothing)) ex1
-
--- select x, y, z as foo from u;
-ex4 = Project [(Col "x" Nothing, Nothing),
-               (Col "y" Nothing, Nothing),
-               (Col "z" Nothing, Just "foo")] tblU
-
--- select * from u;
-ex5 = Project [(Col "*" Nothing, Nothing)] tblU
-
--- select * from t, u;
-ex6 = Project [(Col "*" Nothing, Nothing)] $ Join Inner tblT tblU Nothing
-
--- select * from t,u where t.x = u.x;
-ex7 = Project [(Col "*" Nothing, Nothing)] $
-        Join Inner tblT tblU $ 
-          Just $ Compare "=" (Col "x" $ Just "t") (Col "x" $ Just "u")
-
-examples = [ex0, ex1, ex2, ex3, ex4, ex5, ex6, ex7]
-
-runTests = forM_ examples (putStrLn . show . desugar) 
-
-desugar :: SRA -> RA
+desugar :: TableMap -> SRA -> RA
 -- desugaring a table name means looking up the table, which
 -- will be a list of (name, type) pairs, and creating a list
 -- of expressions from those pairs, where each expression is
 -- a single column (toExpr)
-desugar (TableName name Nothing) = case M.lookup name tables of
+desugar tables (TableName name Nothing) = case tLookup name tables of
   Just cols -> Table name cols
   Nothing -> error $ "No table named " ++ name
 
 -- if there is a table alias given, we wrap our table in a Rho
 -- operator.
-desugar (TableName name (Just n)) = 
-  RhoTable n $ desugar $ TableName name Nothing
+desugar tables (TableName name (Just n)) = 
+  RhoTable n $ desugar tables (TableName name Nothing)
 -- desugaring a projection, we need to get the list of expressions
 -- we want to project, and then apply a rho operator for each one
 -- in the list that has an alias. We also need to check for *s.
-desugar (Project nes sra) =
+desugar tables (Project nes sra) =
   let 
-    ra = desugar sra
+    ra = desugar tables sra
     -- get whatever we need to project, meaning fst of each (String, Type)
     toProject = (map fst nes)
     expand :: RA -> [Expression]
@@ -89,11 +44,11 @@ desugar (Project nes sra) =
   in
   doRename nes project
 -- desugaring a select operator is simple
-desugar (Select cond sra) = Sigma cond (desugar sra)
+desugar tables (Select cond sra) = Sigma cond (desugar tables sra)
 -- for an Inner join, it's a cross product but it might have a join
 -- condition specified, which would mean a Sigma operator.
-desugar (Join Inner l r jc) = 
-  let (raL, raR) = (desugar l, desugar r) in
+desugar tables (Join Inner l r jc) = 
+  let (raL, raR) = (desugar tables l, desugar tables r) in
   case jc of
     Nothing -> Cross raL raR
     Just cond -> Sigma cond $ Cross raL raR
@@ -133,10 +88,7 @@ getCols (Sigma _ ra) = getCols ra
 -- in a union or difference, we require the columns be the same, so we make
 -- sure that's the case and if so, we return it.
 getCols (Union l r) =
-  let 
-    colsL = getCols l
-    colsR = getCols r
-  in
+  let (colsL, colsR) = (getCols l, getCols r) in
   if colsL == colsR then colsL 
     else error $ "Mismatched attributes: " ++ show (getCols l) ++ 
                    " != " ++ show (getCols r)
@@ -163,8 +115,5 @@ getType (Binary "||" e1 e2) ra =
     (String, String) -> String
     otherwise -> error "Can't concat anything but strings"
 getType (Binary op e1 e2) ra = 
-  let 
-    t1 = getType e1 ra
-    t2 = getType e2 ra
-  in
+  let (t1, t2) = (getType e1 ra, getType e2 ra) in
   if t1 == t2 then t1 else error $ "Mismatched types in " ++ op
