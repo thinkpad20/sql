@@ -4,6 +4,7 @@ import SRA
 import Data.List
 
 desugar :: TableMap -> SRA -> RA
+
 -- desugaring a table name means looking up the table, which
 -- will be a list of (name, type) pairs, and creating a list
 -- of expressions from those pairs, where each expression is
@@ -16,6 +17,7 @@ desugar tables (TableName name Nothing) = case tLookup name tables of
 -- operator.
 desugar tables (TableName name (Just n)) = 
   RhoTable n $ desugar tables (TableName name Nothing)
+
 -- desugaring a projection, we need to get the list of expressions
 -- we want to project, and then apply a rho operator for each one
 -- in the list that has an alias. We also need to check for *s.
@@ -37,14 +39,16 @@ desugar tables (Project nes sra) =
     doRename :: [NamedExpr] -> RA -> RA
      -- if no more expressions to do, return RA
     doRename [] ra = ra
-    -- if we have an expression, but not renamed, no need to add anything
+    -- if we have an expression which is not renamed, don't add anything
     doRename ((_, Nothing):nes) ra = doRename nes ra
     -- if we have a renaming, now we need to apply a rho operator
     doRename ((e, Just n):nes) ra = Rho e n (doRename nes ra)
   in
   doRename nes project
+
 -- desugaring a select operator is simple
 desugar tables (Select cond sra) = Sigma cond (desugar tables sra)
+
 -- for an Inner join, it's a cross product but it might have a join
 -- condition specified, which would mean a Sigma operator.
 desugar tables (Join Inner l r jc) = 
@@ -52,6 +56,23 @@ desugar tables (Join Inner l r jc) =
   case jc of
     Nothing -> Cross raL raR
     Just cond -> Sigma cond $ Cross raL raR
+
+-- for left/right outer joins, we need to see what columns the two tables
+-- have in common.
+desugar tables (Join LeftOuter l r jc) =
+  let 
+    -- Wikipedia states that L (left outer join) R can be expressed as
+    -- (L ⋈ R) ∪ ((L - π(l1,..,lN, L ⋈ R))×{(ω,..,ω)})
+    -- where l1,..,lN are attributes of L, and ωs are a relation consisting
+    -- of the columns which are in R but not in L.
+    (raL, raR) = (desugar tables l, desugar tables r)
+    natJoin = (desugar tables $ NaturalJoin l r)
+    (colsL, colsR) = (getCols raL, getCols raR)
+    exprsL = map (\(n,t) -> Col n Nothing) colsL
+    inRightOnly = colsR \\ colsL
+    ω = Table "ω" inRightOnly
+  in
+  Union natJoin (Cross (Difference (raL) (Pi exprsL natJoin)) ω)
 
 
 getCols :: RA -> [Column]
@@ -75,9 +96,8 @@ getCols (Rho e s ra) =
     cols = getCols ra
     rename :: Column -> Column
     rename (cName, t) = if cName == show e then (show e, t) else (cName, t)
-    newCols = map rename cols
   in
-  newCols
+  map rename cols
 
 -- renaming a table doesn't change the name of its columns, so we leave it
 getCols (RhoTable _ ra) = getCols ra
@@ -98,7 +118,6 @@ getCols (Difference l r) = getCols (Union l r)
 
 -- with a cross product, the columns will be concatenated.
 getCols (Cross l r) = getCols l ++ getCols r
-
 
 getType :: Expression -> RA -> Type
 -- Small type checking function for getCols; also will report type
