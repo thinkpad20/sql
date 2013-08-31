@@ -1,0 +1,25 @@
+getName :: RA -> String
+getName (Table name _) = name
+getName (Pi _ ra) = getName ra
+getName (Rho _ _ ra) = getName ra
+getName (Sigma _ ra) = getName ra
+getName (RhoTable s _) = s
+getName (Union l r) = getName l ++ "~" ++ getName r
+getName (Difference l r) = getName l ++ "-" ++ getName r
+getName (Cross l r) = getName l ++ "*" ++ getName r
+
+
+desugar (NaturalJoin sra1 sra2) = 
+  let 
+    ra1 = desugar sra1
+    ra2 = desugar sra2
+    toTups :: RA -> [(Expression, Type)]
+    toTups ra = map (\(Column e t _) -> (e,t)) (getCols ra)
+    colsInEither = map fst $ union (toTups ra1) (toTups ra2)
+    colsInBoth = map fst $ intersect (toTups ra1) (toTups ra2)
+    cond = case inBoth of
+      [] -> Bool False
+      --(e:es) -> makeCond (BinaryCond "=" es
+    makeCond [] = 
+  in
+  ra1
