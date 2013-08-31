@@ -57,8 +57,7 @@ desugar tables (Join Inner l r jc) =
     Nothing -> Cross raL raR
     Just cond -> Sigma cond $ Cross raL raR
 
--- for left/right outer joins, we need to see what columns the two tables
--- have in common.
+-- for left/right outer joins, we have some magic juju identities...
 desugar tables (Join LeftOuter l r jc) =
   let 
     -- Wikipedia states that L (left outer join) R can be expressed as
@@ -71,8 +70,38 @@ desugar tables (Join LeftOuter l r jc) =
     exprsL = map (\(n,t) -> Col n Nothing) colsL
     inRightOnly = colsR \\ colsL
     ω = Table "ω" inRightOnly
+    res = Union natJoin (Cross (Difference (raL) (Pi exprsL natJoin)) ω)
   in
-  Union natJoin (Cross (Difference (raL) (Pi exprsL natJoin)) ω)
+  case jc of
+    Nothing -> res
+    Just cond -> Sigma cond res
+
+-- right outer same as above but swapped
+desugar tables (Join RightOuter l r jc) =
+  let 
+    (raL, raR) = (desugar tables l, desugar tables r)
+    natJoin = (desugar tables $ NaturalJoin l r)
+    (colsL, colsR) = (getCols raL, getCols raR)
+    exprsR = map (\(n,t) -> Col n Nothing) colsR
+    inLeftOnly = colsL \\ colsR
+    ω = Table "ω" inLeftOnly
+    res = Union natJoin (Cross (Difference (raR) (Pi exprsR natJoin)) ω)
+  in
+  case jc of
+    Nothing -> res
+    Just cond -> Sigma cond res
+
+-- full outer join can be defined as (L foj R) = (L loj R) U (L roj R)
+desugar tables (Join FullOuter l r jc) = 
+  let 
+    loj = desugar tables (Join LeftOuter l r Nothing)
+    roj = desugar tables (Join RightOuter l r Nothing)
+    res = Union loj roj
+  in
+  case jc of
+    Nothing -> res
+    Just cond -> Sigma cond res
+
 
 
 getCols :: RA -> [Column]
