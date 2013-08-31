@@ -68,8 +68,10 @@ instance Show SRA where
 instance Show Condition where
   show (Bool b) = show b
   show (Compare op e1 e2) = show e1 ++ op ++ show e2
-  show (BinaryCond op c1 c2) = "(" ++ show c1 ++ op ++ show c2 ++ ")"
+  show (BinaryCond op c1 c2) = "(" ++ show c1 ++ " " ++
+                                 op ++ " " ++ show c2 ++ ")"
   show (Not c) = "not (" ++ show c ++ ")"
+
 
 tLookup :: String -> TableMap -> Maybe [Column]
 tLookup = M.lookup

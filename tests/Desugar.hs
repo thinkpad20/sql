@@ -2,9 +2,9 @@ module Desugar where
 
 import SRA
 import Data.List
+import Debug.Trace
 
 desugar :: TableMap -> SRA -> RA
-
 -- desugaring a table name means looking up the table, which
 -- will be a list of (name, type) pairs, and creating a list
 -- of expressions from those pairs, where each expression is
@@ -13,15 +13,15 @@ desugar tables (TableName name Nothing) = case tLookup name tables of
   Just cols -> Table name cols
   Nothing -> error $ "No table named " ++ name
 
--- if there is a table alias given, we wrap our table in a Rho
--- operator.
 desugar tables (TableName name (Just n)) = 
+  -- if there is a table alias given, we wrap our table in a Rho
+  -- operator.
   RhoTable n $ desugar tables (TableName name Nothing)
 
--- desugaring a projection, we need to get the list of expressions
--- we want to project, and then apply a rho operator for each one
--- in the list that has an alias. We also need to check for *s.
 desugar tables (Project nes sra) =
+  -- desugaring a projection, we need to get the list of expressions
+  -- we want to project, and then apply a rho operator for each one
+  -- in the list that has an alias. We also need to check for *s.
   let 
     ra = desugar tables sra
     -- get whatever we need to project, meaning fst of each (String, Type)
@@ -37,72 +37,109 @@ desugar tables (Project nes sra) =
     -- build the full star-expanded Pi statement
     project = Pi (starExpand toProject) ra
     doRename :: [NamedExpr] -> RA -> RA
-     -- if no more expressions to do, return RA
-    doRename [] ra = ra
+    -- if we have a renaming, we need to apply a rho operator
+    doRename ((e, Just n):nes) ra = Rho e n (doRename nes ra)
     -- if we have an expression which is not renamed, don't add anything
     doRename ((_, Nothing):nes) ra = doRename nes ra
-    -- if we have a renaming, now we need to apply a rho operator
-    doRename ((e, Just n):nes) ra = Rho e n (doRename nes ra)
+    -- if no more expressions to do, return RA
+    doRename [] ra = ra
   in
   doRename nes project
 
 -- desugaring a select operator is simple
 desugar tables (Select cond sra) = Sigma cond (desugar tables sra)
 
--- for an Inner join, it's a cross product but it might have a join
--- condition specified, which would mean a Sigma operator.
 desugar tables (Join Inner l r jc) = 
+  -- for an Inner join, it's a cross product but it might have a join
+  -- condition specified, which would mean a Sigma operator.
   let (raL, raR) = (desugar tables l, desugar tables r) in
   case jc of
     Nothing -> Cross raL raR
     Just cond -> Sigma cond $ Cross raL raR
 
+desugar tables (NaturalJoin l r) =
+  -- we have this formula from wikipedia for the natural join:
+  -- L ⋈ R = 
+  --    π([l1,..lN ∪ r1,..,rN], 
+  --       σ(l.a1 = r.a1 ^ l.a2 = r.a2 ^ ... ^ r.aN = l.aN, 
+  --          (L × R)))
+  -- in other words, we find all of the columns that they have in common,
+  -- and select on equality on those columns, and then project the union of
+  -- columns (so no repetition)
+  let
+    (raL, raR) = (desugar tables l, desugar tables r)
+    cross = (Cross raL raR)
+    (colsL, colsR) = (getCols raL, getCols raR)
+    -- get list of columns in both and those in either
+    inBoth = colsL `intersect` colsR
+    inEither = colsL `union` colsR
+    -- to construct the equalities, we need to perform this transformation
+    -- Col "foo" Nothing -> 
+    --   Compare "=" (Col "foo" (Just "l")) (Col "foo" (Just "r"))
+    -- this means that we must be able to know the names of the L and R tables
+    -- so we'll throw an error if l and r are not either simple Tables, or
+    -- RhoTables.
+    (lName, rName) = (getName raL, getName raR)
+    trans (n, _) = Compare "=" (Col n $ Just lName) (Col n $ Just rName)
+    eqs = map trans inBoth
+  in
+  -- if no columns in common, then it's just a cross product
+  if inBoth == [] then cross 
+    -- otherwise, AND all of the equality statements together, put it in a
+    -- Sigma statement, and project whichever columns are in either
+    else Pi (map colToExpr $ inEither)
+      (Sigma (foldr1 (BinaryCond "and") eqs) cross)
+
 -- for left/right outer joins, we have some magic juju identities...
 desugar tables (Join LeftOuter l r jc) =
-  let 
-    -- Wikipedia states that L (left outer join) R can be expressed as
-    -- (L ⋈ R) ∪ ((L - π(l1,..,lN, L ⋈ R))×{(ω,..,ω)})
-    -- where l1,..,lN are attributes of L, and ωs are a relation consisting
-    -- of the columns which are in R but not in L.
+  -- Wikipedia states that L (left outer join) R can be expressed as
+  -- L loj R = (L ⋈ R) ∪ ((L - π([l1,..,lN], L ⋈ R))×{(ω,..,ω)})
+  -- where [l1,..,lN] are attributes of L, and ωs are a relation consisting
+  -- of the columns which are in R but not in L.
+  let
     (raL, raR) = (desugar tables l, desugar tables r)
-    natJoin = (desugar tables $ NaturalJoin l r)
     (colsL, colsR) = (getCols raL, getCols raR)
-    exprsL = map (\(n,t) -> Col n Nothing) colsL
-    inRightOnly = colsR \\ colsL
+    exprsL = map colToExpr colsL
+    inRightOnly = colsR \\ colsL -- (\\) is set difference
     ω = Table "ω" inRightOnly
+    natJoin = (desugar tables $ NaturalJoin l r)
     res = Union natJoin (Cross (Difference (raL) (Pi exprsL natJoin)) ω)
   in
-  case jc of
-    Nothing -> res
-    Just cond -> Sigma cond res
+  case jc of Nothing -> res
+             Just cond -> Sigma cond res
 
 -- right outer same as above but swapped
 desugar tables (Join RightOuter l r jc) =
   let 
     (raL, raR) = (desugar tables l, desugar tables r)
-    natJoin = (desugar tables $ NaturalJoin l r)
     (colsL, colsR) = (getCols raL, getCols raR)
-    exprsR = map (\(n,t) -> Col n Nothing) colsR
+    exprsR = map colToExpr colsR
     inLeftOnly = colsL \\ colsR
     ω = Table "ω" inLeftOnly
+    natJoin = (desugar tables $ NaturalJoin l r)
     res = Union natJoin (Cross (Difference (raR) (Pi exprsR natJoin)) ω)
   in
-  case jc of
-    Nothing -> res
-    Just cond -> Sigma cond res
+  case jc of Nothing -> res
+             Just cond -> Sigma cond res
 
 -- full outer join can be defined as (L foj R) = (L loj R) U (L roj R)
 desugar tables (Join FullOuter l r jc) = 
-  let 
-    loj = desugar tables (Join LeftOuter l r Nothing)
-    roj = desugar tables (Join RightOuter l r Nothing)
-    res = Union loj roj
+  let
+    oj typ = desugar tables (Join typ l r Nothing)
+    res = Union (oj LeftOuter) (oj RightOuter)
   in
-  case jc of
-    Nothing -> res
-    Just cond -> Sigma cond res
+  case jc of Nothing -> res
+             Just cond -> Sigma cond res
 
+-- convenience function which creates an expression out of a column
+colToExpr :: (String, Type) -> Expression
+colToExpr (n,_) = Col n Nothing
 
+getName :: RA -> String
+-- throws an error if RA is not either a Table or a RhoTable
+getName (Table name _) = name
+getName (RhoTable name _) = name
+getName _ = error "Every derived table must have its own alias"
 
 getCols :: RA -> [Column]
 -- getCols will return a list of (String, Type) from any table;
@@ -147,6 +184,7 @@ getCols (Difference l r) = getCols (Union l r)
 
 -- with a cross product, the columns will be concatenated.
 getCols (Cross l r) = getCols l ++ getCols r
+
 
 getType :: Expression -> RA -> Type
 -- Small type checking function for getCols; also will report type
