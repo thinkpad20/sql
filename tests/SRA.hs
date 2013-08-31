@@ -51,7 +51,7 @@ instance Show Expression where
 instance Show SRA where
   show (TableName name Nothing) = name
   show (TableName name (Just n) ) = name ++ " as " ++ n
-  show (Project nes sra) = "select " ++ show nes ++ " from (" ++ show sra ++ ")"
+  show (Project es sra) = "select " ++ show es ++ " from (" ++ show sra ++ ")"
   show (Select cond sra) = show sra ++ " where " ++ show cond
   show (NaturalJoin l r) = "(" ++ show l ++ ") ⋈ (" ++ show r ++ ")"
   show (Join t l r cond) = "(" ++ show l ++ ") " ++ show t ++ 

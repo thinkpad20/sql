@@ -3,7 +3,7 @@ module Desugar where
 import SRA
 import Data.List
 import qualified Data.Map as M
-import Control.Monad
+import Control.Monad (forM_)
 
 {------------------- Example queries/tables -------------------}
 tables :: M.Map String [(String, Type)]
@@ -11,32 +11,40 @@ t = [("x", Int), ("y", Int)]
 u = [("x", Int), ("y", Int), ("z", Int)]
 tables = M.fromList [("t", t), ("u", u)]
 
+tblT = (TableName "t" Nothing)
+tblU = (TableName "u" Nothing)
 -- select x, y from t;
-ex0 = Project [(Col "x" Nothing, Nothing), (Col "y" Nothing, Nothing)]
-                  (TableName "t" Nothing)
+ex0 = Project [(Col "x" Nothing, Nothing), (Col "y" Nothing, Nothing)] tblT
 
 -- select x, x + y as z from t;
 ex1 = Project [(Col "x" Nothing, Nothing), 
                 (Binary "+" (Col "x" Nothing) (Col "y" Nothing), Just "z")] 
-                  (TableName "t" Nothing)
+                  tblT
 
 -- select z from (select x, x+y as z from t);
 ex2 = Project [(Col "z" Nothing, Nothing)] ex1
 
 -- select x, z from (select x, x+y as z from t) where x = z;
-ex3 = Project [(Col "x" Nothing, Nothing), (Col "z" Nothing, Nothing)]
-                (Select (Compare "=" (Col "x" Nothing) (Col "z" Nothing)) ex1)
+ex3 = Project [(Col "x" Nothing, Nothing), (Col "z" Nothing, Nothing)] $
+       Select (Compare "=" (Col "x" Nothing) (Col "z" Nothing)) ex1
 
 -- select x, y, z as foo from u;
 ex4 = Project [(Col "x" Nothing, Nothing),
                (Col "y" Nothing, Nothing),
-               (Col "z" Nothing, Just "foo")]
-                  (TableName "u" Nothing)
+               (Col "z" Nothing, Just "foo")] tblU
 
 -- select * from u;
-ex5 = Project [(Col "*" Nothing, Nothing)] (TableName "u" Nothing)
+ex5 = Project [(Col "*" Nothing, Nothing)] tblU
 
-examples = [ex0, ex1, ex2, ex3, ex4, ex5]
+-- select * from t, u;
+ex6 = Project [(Col "*" Nothing, Nothing)] $ Join Inner tblT tblU Nothing
+
+-- select * from t,u where t.x = u.x;
+ex7 = Project [(Col "*" Nothing, Nothing)] $
+        Join Inner tblT tblU $ 
+          Just $ Compare "=" (Col "x" $ Just "t") (Col "x" $ Just "u")
+
+examples = [ex0, ex1, ex2, ex3, ex4, ex5, ex6, ex7]
 
 runTests = forM_ examples (putStrLn . show . desugar) 
 
@@ -59,15 +67,17 @@ desugar (TableName name (Just n)) =
 desugar (Project nes sra) =
   let 
     ra = desugar sra
-    -- get whatever we need to project
+    -- get whatever we need to project, meaning fst of each (String, Type)
     toProject = (map fst nes)
     expand :: RA -> [Expression]
+    -- expand returns a list of all of the expressions in an RA
     expand ra = map (\(n,_) -> Col n Nothing) $ getCols ra
-    -- expand any stars
+    -- starExpand replaces any stars in a list with their expressions
     starExpand [] = []
     -- later we'll specifically address t.* vs u.*
     starExpand ((Col "*" _):es) = expand ra ++ starExpand es
     starExpand (e:es) = e : starExpand es
+    -- build the full star-expanded Pi statement
     project = Pi (starExpand toProject) ra
     doRename :: [NamedExpr] -> RA -> RA
      -- if no more expressions to do, return RA
@@ -89,10 +99,10 @@ desugar (Join Inner l r jc) =
     Just cond -> Sigma cond $ Cross raL raR
 
 
-
+getCols :: RA -> [Column]
 -- getCols will return a list of (String, Type) from any table;
 -- a.k.a. the names and types of the columns to be found in this table.
-getCols :: RA -> [Column]
+
 -- in the simplest case, we already know the answer
 getCols (Table name cols) = cols
 
@@ -138,9 +148,9 @@ getCols (Difference l r) = getCols (Union l r)
 getCols (Cross l r) = getCols l ++ getCols r
 
 
+getType :: Expression -> RA -> Type
 -- Small type checking function for getCols; also will report type
 -- mismatch errors or non-existent columns.
-getType :: Expression -> RA -> Type
 getType (Col name _) ra = case lookup name (getCols ra) of
   -- todo: examine cases where table name is specified
   Just t -> t
