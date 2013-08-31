@@ -32,6 +32,7 @@ data SRA = TableName String (Maybe String)
       | NaturalJoin SRA SRA
       | Join JoinType SRA SRA (Maybe Condition)
       | SRAUnion SRA SRA
+      | Intersect SRA SRA
       | Except SRA SRA
       deriving (Eq)
 
@@ -41,7 +42,7 @@ data RA = Table String [Column]
       | RhoTable String RA
       | Sigma Condition RA
       | Union RA RA
-      | Difference RA RA
+      | Diff RA RA
       | Cross RA RA
       deriving (Show, Eq)
 

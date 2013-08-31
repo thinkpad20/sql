@@ -76,9 +76,7 @@ desugar tables (NaturalJoin l r) =
     -- to construct the equalities, we need to perform this transformation
     -- Col "foo" Nothing -> 
     --   Compare "=" (Col "foo" (Just "l")) (Col "foo" (Just "r"))
-    -- this means that we must be able to know the names of the L and R tables
-    -- so we'll throw an error if l and r are not either simple Tables, or
-    -- RhoTables.
+    -- this means that we need to know the names of the L and R tables
     (lName, rName) = (getName raL, getName raR)
     trans (n, _) = Compare "=" (Col n $ Just lName) (Col n $ Just rName)
     eqs = map trans inBoth
@@ -103,7 +101,7 @@ desugar tables (Join LeftOuter l r jc) =
     inRightOnly = colsR \\ colsL -- (\\) is set difference
     ω = Table "ω" inRightOnly
     natJoin = (desugar tables $ NaturalJoin l r)
-    res = Union natJoin (Cross (Difference (raL) (Pi exprsL natJoin)) ω)
+    res = Union natJoin (Cross (Diff (raL) (Pi exprsL natJoin)) ω)
   in
   case jc of Nothing -> res
              Just cond -> Sigma cond res
@@ -117,7 +115,7 @@ desugar tables (Join RightOuter l r jc) =
     inLeftOnly = colsL \\ colsR
     ω = Table "ω" inLeftOnly
     natJoin = (desugar tables $ NaturalJoin l r)
-    res = Union natJoin (Cross (Difference (raR) (Pi exprsR natJoin)) ω)
+    res = Union natJoin (Cross (Diff (raR) (Pi exprsR natJoin)) ω)
   in
   case jc of Nothing -> res
              Just cond -> Sigma cond res
@@ -126,10 +124,17 @@ desugar tables (Join RightOuter l r jc) =
 desugar tables (Join FullOuter l r jc) = 
   let
     oj typ = desugar tables (Join typ l r Nothing)
-    res = Union (oj LeftOuter) (oj RightOuter)
+    res = (oj LeftOuter) `Union` (oj RightOuter)
   in
   case jc of Nothing -> res
              Just cond -> Sigma cond res
+
+desugar tables (SRAUnion l r) = (desugar tables l) `Union` (desugar tables r)
+desugar tables (Intersect l r) = 
+  let (raL, raR) = (desugar tables l, desugar tables r) in
+  (raL `Union` raR) `Diff` (raL `Diff` raR) `Diff` (raR `Diff` raL)
+desugar tables (Except l r) = (desugar tables l) `Diff` (desugar tables r)
+
 
 -- convenience function which creates an expression out of a column
 colToExpr :: (String, Type) -> Expression
@@ -180,7 +185,7 @@ getCols (Union l r) =
                    " != " ++ show (getCols r)
 
 -- difference is same as union here.
-getCols (Difference l r) = getCols (Union l r)
+getCols (Diff l r) = getCols (Union l r)
 
 -- with a cross product, the columns will be concatenated.
 getCols (Cross l r) = getCols l ++ getCols r
