@@ -2,7 +2,6 @@ module Desugar where
 
 import SRA
 import Data.List
-import Debug.Trace
 
 desugar :: TableMap -> SRA -> RA
 -- desugaring a table name means looking up the table, which
@@ -155,7 +154,9 @@ getCols (Table name cols) = cols
 
 -- when we have a project, we are specifying the names of columns to be
 -- carried through. We simply use the show function to get a string
--- representation of the expression. Table name qualifiers will be kept.
+-- representation of the expression, and we use the getType function to
+-- find the type; from this we can construct a (String, Type) tuple, which
+-- is a column. Table name qualifiers will be kept.
 getCols (Pi exprs ra) = map toCols exprs where
   toCols expr = (show expr, getType expr ra)
 
