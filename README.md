@@ -85,6 +85,8 @@ Currently, we have a good deal of machinery in place. The parser and lexer are f
 
 The largest thing missing at this point is the desugarer. However, we have one written up in the Haskell language (`Desugar.hs`, `SRA.hs`, examples are in `Tests.hs`), and the translation of this code into C should be fairly straightforward. Haskell allows us to represent and manipulate structures of RA and SRA with ease, conciseness and correctness, and I humbly recommend any modification of the code to be prototyped in Haskell prior to coding it in C.
 
+Finally, certain things like `ORDER BY`, `GROUP BY`, `SELECT DISTINCT`, sized types, etc are supported by the parser, but have little or nothing in the underlying C code to apply these. The implementation of these and other features are left to future programmers, who may wish to simply disallow them and throw errors when they are used.
+
 ## Installation and Usage
 
 This has only been run on Mac OS X, although it should work without incident on Linux as well. Windows will presumably require installation of Lex and Yacc, along with some meddling with the makefile (if indeed make can be run on Windows), to account for different filename conventions.
