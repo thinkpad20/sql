@@ -52,15 +52,26 @@ select f.a as Col1, g.a as Col2 from Foo f, Foo g where Col1 != Col2;
 SRA:
 Project([(f,a,Col1), (g,a,Col2)],
    Select(Col1 != Col2,
-      Join([(Foo,f), (Foo,g)])
+      Join(
+         Table(Foo,f), 
+         Table(Foo,g)
+      )
    )
 )
 
 Pi([Col1, Col2],
    Sigma(Col1 != Col2,
       Cross(
-         Rho(Foo, f, [Col1]),
-         Rho(Foo, g, [Col2])
+         Rho(a, Col1,
+            RhoTable(f,
+               Table(Foo)
+            )
+         ),
+         Rho(a, Col2,
+            RhoTable(g,
+               Table(Foo)
+            )
+         )
       )
    )
 )
